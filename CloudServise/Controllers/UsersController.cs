@@ -32,18 +32,22 @@ namespace CloudServise_API.Controllers
             var actionResult = await _context.Users.ToListAsync();
             foreach (var user in actionResult)
             {
-                userDtos.Add(await user.ToUserDtoAsync());
+                userDtos.Add(user.ToUserDto());
             }
             return userDtos;
         }
 
         // GET: api/Users/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<User>> GetUser(Guid id)
+        public async Task<ActionResult<UserDTO>> GetUser(Guid id)
         {
             var user = await _context.Users.FindAsync(id);
-            var result = await user.ToUserDtoAsync();
-            return user;
+            if (user == null)
+            {
+                return NotFound();
+            }
+
+            return user.ToUserDto();
         }
 
         // PUT: api/Users/5
@@ -90,7 +94,7 @@ namespace CloudServise_API.Controllers
         // To protect from overposting attacks, enable the specific properties you want to bind to, for
         // more details, see https://go.microsoft.com/fwlink/?linkid=2123754.
         [HttpPost]
-        public async Task<ActionResult<UserDTO>> PostUser(UserDTO user)
+        public async Task<ActionResult<UserDTO>> PostUser(User user)
         {
             var role = await _context.Roles.FindAsync(user.Role.Id);
             if (role == null)
@@ -98,14 +102,13 @@ namespace CloudServise_API.Controllers
                 return BadRequest();
             }
 
-            var newUser = new User(user.Email, user.UserName, user.Password, user.Name, user.Surname,
-                user.Patronymic, user.ReportCard, role);
+            var newUser = new User(user.Name, user.Surname, user.Patronymic, user.ReportCard, role);
 
             try
             {
                 await _context.Users.AddAsync(newUser);
                 await _context.SaveChangesAsync();
-                return Ok(await newUser.ToUserDtoAsync());
+                return Created("", newUser.ToUserDto());
             }
             catch (Exception ex)
             {

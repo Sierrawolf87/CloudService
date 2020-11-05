@@ -51,22 +51,17 @@ namespace CloudServise_API.Models
             Role = role;
         }
 
-        public Task<UserDTO> ToUserDtoAsync()
+        public UserDTO ToUserDto()
         {
-            return Task.Factory.StartNew(() =>
-                {
-                    UserDTO userDto = new UserDTO();
-                    userDto.Id = Id;
-                    userDto.Email = Email;
-                    userDto.Name = Name;
-                    userDto.Surname = Surname;
-                    userDto.Patronymic = Patronymic;
-                    userDto.ReportCard = ReportCard;
-                    userDto.Role = Role;
-
-                    return userDto;
-                }
-            );
+            UserDTO userDto = new UserDTO();
+            userDto.Id = Id;
+            userDto.Email = Email;
+            userDto.Name = Name;
+            userDto.Surname = Surname;
+            userDto.Patronymic = Patronymic;
+            userDto.ReportCard = ReportCard;
+            userDto.Role = Role.ToRoleDTO();
+            return userDto;
         }
 
 
@@ -77,19 +72,13 @@ namespace CloudServise_API.Models
         public Guid Id { get; set; }
         public string Email { get; set; }
         public string UserName { get; set; }
-        public string Password { get; set; }
         public string Name { get; set; }
         public string Surname { get; set; }
         public string Patronymic { get; set; }
-        public string Initials => !string.IsNullOrEmpty(Patronymic) ? $"{Surname} {Name[0]}. {Patronymic[0]}" : $"{Surname} {Name[0]}";
+        public string Initials => !string.IsNullOrEmpty(Patronymic) ? $"{Surname} {Name[0]}. {Patronymic[0]}." : $"{Surname} {Name[0]}";
         public string ReportCard { get; set; }
 
-        public Role Role { get; set; }
+        public RoleDTO Role { get; set; }
 
-        public User ToUser()
-        {
-            var user = new User(Email, UserName, Password, Name, Surname, Patronymic, ReportCard, Role);
-            return user;
-        }
     }
 }

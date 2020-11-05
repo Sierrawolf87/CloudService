@@ -18,5 +18,29 @@ namespace CloudServise_API.Models
 
         public List<DisciplineGroupTeacher> DisciplineGroupTeachers { get; set; }
 
+        public Group() {}
+        public Group(string name)
+        {
+            Name = name;
+        }
+
+        public GroupDTO ToGroupDto()
+        {
+            GroupDTO groupDto = new GroupDTO(Id, Name);
+            return groupDto;
+        }
+    }
+
+    public class GroupDTO
+    {
+        public Guid Id;
+        public string Name;
+
+        public GroupDTO() {}
+        public GroupDTO(Guid id, string name)
+        {
+            Id = id;
+            Name = name;
+        }
     }
 }

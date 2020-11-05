@@ -26,6 +26,37 @@ namespace CloudServise_API.Models
         public Guid TeacherId { get; set; }
         [ForeignKey("TeacherId")]
         public User Teacher { get; set; }
+
+        public DisciplineGroupTeacher() {}
+        public DisciplineGroupTeacher(Guid disciplineId, Guid groupId, Guid teacherId)
+        {
+            DisciplineId = disciplineId;
+            GroupId = groupId;
+            TeacherId = teacherId;
+        }
+
+        public DisciplineGroupTeacherDTO ToDisciplineGroupTeacherDto()
+        {
+            DisciplineGroupTeacherDTO dto = new DisciplineGroupTeacherDTO(Id, DisciplineId, GroupId, TeacherId);
+            return dto;
+        }
     }
 
+
+    public class DisciplineGroupTeacherDTO
+    {
+        public Guid Id { get; set; }
+        public Guid DisciplineId { get; set; }
+        public Guid GroupId { get; set; }
+        public Guid TeacherId { get; set; }
+
+        public DisciplineGroupTeacherDTO() {}
+        public DisciplineGroupTeacherDTO(Guid id, Guid disciplineId, Guid groupId, Guid teacherId)
+        {
+            Id = id;
+            DisciplineId = disciplineId;
+            GroupId = groupId;
+            TeacherId = teacherId;
+        }
+    }
 }
