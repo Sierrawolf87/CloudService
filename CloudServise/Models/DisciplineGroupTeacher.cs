@@ -37,8 +37,7 @@ namespace CloudServise_API.Models
 
         public DisciplineGroupTeacherDTO ToDisciplineGroupTeacherDto()
         {
-            DisciplineGroupTeacherDTO dto = new DisciplineGroupTeacherDTO(Id, DisciplineId, GroupId, TeacherId);
-            return dto;
+            return new DisciplineGroupTeacherDTO(Id, DisciplineId, GroupId, TeacherId);
         }
     }
 

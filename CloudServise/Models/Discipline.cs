@@ -20,7 +20,7 @@ namespace CloudServise_API.Models
 
         public List<DisciplineGroupTeacher> DisciplineGroupTeachers { get; set; }
 
-        //public List<LaboratoryWork> Laboratories { get; set; }
+        public List<LaboratoryWork> Laboratories { get; set; }
 
         public Discipline() {}
         public Discipline(string name, string creatorId)

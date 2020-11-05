@@ -26,8 +26,7 @@ namespace CloudServise_API.Models
 
         public GroupDTO ToGroupDto()
         {
-            GroupDTO groupDto = new GroupDTO(Id, Name);
-            return groupDto;
+            return new GroupDTO(Id, Name);
         }
     }
 

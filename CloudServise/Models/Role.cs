@@ -21,9 +21,8 @@ namespace CloudServise_API.Models
         }
 
         public RoleDTO ToRoleDTO()
-        {
-            RoleDTO roleDto = new RoleDTO(Id, Name);
-            return roleDto;
+        { 
+            return new RoleDTO(Id, Name);
         }
     }
 
