@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace CloudServise_API.Models
+namespace CloudService_API.Models
 {
     public class Role
     {

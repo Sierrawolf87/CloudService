@@ -4,14 +4,16 @@ using CloudService_API.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace CloudService_API.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20201114143341_Corrections_in_files_and_users_1")]
+    partial class Corrections_in_files_and_users_1
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -19,21 +21,18 @@ namespace CloudService_API.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128)
                 .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
-            modelBuilder.Entity("CloudService_API.Models.Discipline", b =>
+            modelBuilder.Entity("CloudServise_API.Models.Discipline", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("CreatorId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("OwnerId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ShortName")
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
@@ -41,7 +40,7 @@ namespace CloudService_API.Migrations
                     b.ToTable("Disciplines");
                 });
 
-            modelBuilder.Entity("CloudService_API.Models.DisciplineGroupTeacher", b =>
+            modelBuilder.Entity("CloudServise_API.Models.DisciplineGroupTeacher", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -67,11 +66,14 @@ namespace CloudService_API.Migrations
                     b.ToTable("DisciplineGroupTeacher");
                 });
 
-            modelBuilder.Entity("CloudService_API.Models.File", b =>
+            modelBuilder.Entity("CloudServise_API.Models.File", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("LaboratoryWorkId")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Name")
                         .HasColumnType("nvarchar(max)");
@@ -100,7 +102,7 @@ namespace CloudService_API.Migrations
                     b.ToTable("Files");
                 });
 
-            modelBuilder.Entity("CloudService_API.Models.Group", b =>
+            modelBuilder.Entity("CloudServise_API.Models.Group", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -116,7 +118,7 @@ namespace CloudService_API.Migrations
                     b.ToTable("Groups");
                 });
 
-            modelBuilder.Entity("CloudService_API.Models.GroupUser", b =>
+            modelBuilder.Entity("CloudServise_API.Models.GroupUser", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -137,7 +139,7 @@ namespace CloudService_API.Migrations
                     b.ToTable("GroupUsers");
                 });
 
-            modelBuilder.Entity("CloudService_API.Models.LaboratoryWork", b =>
+            modelBuilder.Entity("CloudServise_API.Models.LaboratoryWork", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -159,7 +161,7 @@ namespace CloudService_API.Migrations
                     b.ToTable("LaboratoryWorks");
                 });
 
-            modelBuilder.Entity("CloudService_API.Models.Requirement", b =>
+            modelBuilder.Entity("CloudServise_API.Models.Requirement", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -178,7 +180,7 @@ namespace CloudService_API.Migrations
                     b.ToTable("Requirements");
                 });
 
-            modelBuilder.Entity("CloudService_API.Models.Role", b =>
+            modelBuilder.Entity("CloudServise_API.Models.Role", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -192,7 +194,7 @@ namespace CloudService_API.Migrations
                     b.ToTable("Roles");
                 });
 
-            modelBuilder.Entity("CloudService_API.Models.Solution", b =>
+            modelBuilder.Entity("CloudServise_API.Models.Solution", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -217,7 +219,7 @@ namespace CloudService_API.Migrations
                     b.ToTable("Solutions");
                 });
 
-            modelBuilder.Entity("CloudService_API.Models.User", b =>
+            modelBuilder.Entity("CloudServise_API.Models.User", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -254,83 +256,83 @@ namespace CloudService_API.Migrations
                     b.ToTable("Users");
                 });
 
-            modelBuilder.Entity("CloudService_API.Models.DisciplineGroupTeacher", b =>
+            modelBuilder.Entity("CloudServise_API.Models.DisciplineGroupTeacher", b =>
                 {
-                    b.HasOne("CloudService_API.Models.Discipline", "Discipline")
+                    b.HasOne("CloudServise_API.Models.Discipline", "Discipline")
                         .WithMany("DisciplineGroupTeachers")
                         .HasForeignKey("DisciplineId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("CloudService_API.Models.Group", "Group")
+                    b.HasOne("CloudServise_API.Models.Group", "Group")
                         .WithMany("DisciplineGroupTeachers")
                         .HasForeignKey("GroupId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("CloudService_API.Models.User", "Teacher")
+                    b.HasOne("CloudServise_API.Models.User", "Teacher")
                         .WithMany("DisciplineGroupTeachers")
                         .HasForeignKey("TeacherId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("CloudService_API.Models.File", b =>
+            modelBuilder.Entity("CloudServise_API.Models.File", b =>
                 {
-                    b.HasOne("CloudService_API.Models.Requirement", "Requirement")
+                    b.HasOne("CloudServise_API.Models.Requirement", "Requirement")
                         .WithMany("Files")
                         .HasForeignKey("RequirementId");
 
-                    b.HasOne("CloudService_API.Models.Solution", "Solution")
+                    b.HasOne("CloudServise_API.Models.Solution", "Solution")
                         .WithMany("Files")
                         .HasForeignKey("SolutionId");
                 });
 
-            modelBuilder.Entity("CloudService_API.Models.GroupUser", b =>
+            modelBuilder.Entity("CloudServise_API.Models.GroupUser", b =>
                 {
-                    b.HasOne("CloudService_API.Models.Group", "Group")
+                    b.HasOne("CloudServise_API.Models.Group", "Group")
                         .WithMany("GroupsUsers")
                         .HasForeignKey("GroupId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("CloudService_API.Models.User", "User")
+                    b.HasOne("CloudServise_API.Models.User", "User")
                         .WithMany("GroupsUsers")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("CloudService_API.Models.LaboratoryWork", b =>
+            modelBuilder.Entity("CloudServise_API.Models.LaboratoryWork", b =>
                 {
-                    b.HasOne("CloudService_API.Models.Discipline", "Discipline")
+                    b.HasOne("CloudServise_API.Models.Discipline", "Discipline")
                         .WithMany("Laboratories")
                         .HasForeignKey("DisciplineId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("CloudService_API.Models.Requirement", b =>
+            modelBuilder.Entity("CloudServise_API.Models.Requirement", b =>
                 {
-                    b.HasOne("CloudService_API.Models.LaboratoryWork", "LaboratoryWork")
+                    b.HasOne("CloudServise_API.Models.LaboratoryWork", "LaboratoryWork")
                         .WithMany()
                         .HasForeignKey("LaboratoryWorkId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("CloudService_API.Models.Solution", b =>
+            modelBuilder.Entity("CloudServise_API.Models.Solution", b =>
                 {
-                    b.HasOne("CloudService_API.Models.LaboratoryWork", "LaboratoryWork")
+                    b.HasOne("CloudServise_API.Models.LaboratoryWork", "LaboratoryWork")
                         .WithMany()
                         .HasForeignKey("LaboratoryWorkId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("CloudService_API.Models.User", b =>
+            modelBuilder.Entity("CloudServise_API.Models.User", b =>
                 {
-                    b.HasOne("CloudService_API.Models.Role", "Role")
+                    b.HasOne("CloudServise_API.Models.Role", "Role")
                         .WithMany("Users")
                         .HasForeignKey("RoleId");
                 });

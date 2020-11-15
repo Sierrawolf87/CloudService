@@ -5,10 +5,10 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Threading.Tasks;
-using CloudServise_API.Data;
+using CloudService_API.Data;
 using Microsoft.AspNetCore.Cryptography.KeyDerivation;
 
-namespace CloudServise_API.Models
+namespace CloudService_API.Models
 {
     public class User
     {
@@ -26,6 +26,8 @@ namespace CloudServise_API.Models
         public Role Role { get; set; }
 
         public List<DisciplineGroupTeacher> DisciplineGroupTeachers { get; set; }
+
+        public List<GroupUser> GroupsUsers { get; set; }
         
         public User() {}
         public User(string email, string userName, string password, string name, string surname, string patronymic, string reportCard, Role role)
@@ -60,7 +62,7 @@ namespace CloudServise_API.Models
             userDto.Surname = Surname;
             userDto.Patronymic = Patronymic;
             userDto.ReportCard = ReportCard;
-            userDto.Role = Role.ToRoleDTO();
+            userDto.Role = Role?.ToRoleDTO();
             return userDto;
         }
 
@@ -80,5 +82,15 @@ namespace CloudServise_API.Models
 
         public RoleDTO Role { get; set; }
 
+    }
+
+    public class UserRegisterDTO
+    {
+        public string Name { get; set; }
+        public string Surname { get; set; }
+        public string Patronymic { get; set; }
+        public string ReportCard { get; set; }
+
+        public RoleDTO Role { get; set; }
     }
 }

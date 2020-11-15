@@ -2,14 +2,14 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using CloudService_API.Data;
+using CloudService_API.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using CloudServise_API.Data;
-using CloudServise_API.Models;
 using Microsoft.Extensions.Logging;
 
-namespace CloudServise_API.Controllers
+namespace CloudService_API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
@@ -66,7 +66,8 @@ namespace CloudServise_API.Controllers
             var find = await _context.Disciplines.FindAsync(id);
             _context.Entry(discipline).State = EntityState.Modified;
             find.Name = discipline.Name;
-            find.CreatorId = discipline.CreatorId;
+            find.OwnerId = discipline.OwnerId;
+            find.ShortName = discipline.ShortName;
             try
             {
                 await _context.SaveChangesAsync();
@@ -93,7 +94,7 @@ namespace CloudServise_API.Controllers
         [HttpPost]
         public async Task<ActionResult<DisciplineDTO>> PostDiscipline(DisciplineDTO disciplineDto)
         {
-            Discipline discipline =new Discipline(disciplineDto.Name, disciplineDto.CreatorId);
+            Discipline discipline =new Discipline(disciplineDto.Name, disciplineDto.OwnerId, disciplineDto.ShortName);
             try
             {
                 await _context.Disciplines.AddAsync(discipline);

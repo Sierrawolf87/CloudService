@@ -5,7 +5,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace CloudServise_API.Models
+namespace CloudService_API.Models
 {
     public class Solution
     {
@@ -31,6 +31,15 @@ namespace CloudServise_API.Models
             Files.AddRange(files);
         }
 
+        public Solution(string description, Guid ownerId, int mark, Guid laboratoryWorkId)
+        {
+            Description = description;
+            OwnerId = ownerId;
+            Mark = mark;
+            LaboratoryWorkId = laboratoryWorkId;
+            Files = null;
+        }
+
         public SolutionDTO ToSolutionDto()
         {
             return new SolutionDTO(Id, OwnerId, Description, Mark, LaboratoryWorkId, Files);
@@ -44,6 +53,7 @@ namespace CloudServise_API.Models
         public string Description { get; set; }
         public int Mark { get; set; }
         public Guid LaboratoryWorkId { get; set; }
+
         public List<FileDTO> Files { get; set; }
 
         public SolutionDTO() {}
@@ -51,12 +61,29 @@ namespace CloudServise_API.Models
         {
             Id = id;
             OwnerId = ownerId;
+            Description = description;
             Mark = mark;
             LaboratoryWorkId = laboratoryWorkId;
-            foreach (var item in files)
+            if (files != null)
             {
-                Files.Add(item.ToFileDto());
+                foreach (var item in files)
+                {
+                    Files.Add(item.ToFileDto());
+                }
+            }
+            else
+            {
+                Files = null;
             }
         }
+    }
+
+    public class CreateSolutionDTO
+    {
+        public Guid Id { get; set; }
+        public Guid OwnerId { get; set; }
+        public string Description { get; set; }
+        public int Mark { get; set; }
+        public Guid LaboratoryWorkId { get; set; }
     }
 }

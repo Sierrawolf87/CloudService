@@ -5,7 +5,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace CloudServise_API.Models
+namespace CloudService_API.Models
 {
     public class Requirement
     {
@@ -27,6 +27,13 @@ namespace CloudServise_API.Models
             Files.AddRange(Files);
         }
 
+        public Requirement(string description, Guid laboratoryWorkId)
+        {
+            Description = description;
+            LaboratoryWorkId = laboratoryWorkId;
+            Files = null;
+        }
+
         public RequirementDTO ToRequirementDto()
         {
             return new RequirementDTO(Id, Description, LaboratoryWorkId, Files);
@@ -46,10 +53,24 @@ namespace CloudServise_API.Models
             Id = id;
             Description = description;
             LaboratoryWorkId = laboratoryWorkId;
-            foreach (var item in files)
+            if (files != null)
             {
-                Files.Add(item.ToFileDto());
+                foreach (var item in files)
+                {
+                    Files.Add(item.ToFileDto());
+                }
+            }
+            else
+            {
+                Files = null;
             }
         }
+    }
+
+    public class CreateRequirementDTO
+    {
+        public Guid Id { get; set; }
+        public string Description { get; set; }
+        public Guid LaboratoryWorkId { get; set; }
     }
 }

@@ -5,7 +5,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace CloudServise_API.Models
+namespace CloudService_API.Models
 {
     public class Discipline
     {
@@ -15,23 +15,26 @@ namespace CloudServise_API.Models
         [Required]
         public string Name { get; set; }
 
+        public string ShortName { get; set; }
+
         [Required]
-        public string CreatorId { get; set; }
+        public string OwnerId { get; set; }
 
         public List<DisciplineGroupTeacher> DisciplineGroupTeachers { get; set; }
 
         public List<LaboratoryWork> Laboratories { get; set; }
 
         public Discipline() {}
-        public Discipline(string name, string creatorId)
+        public Discipline(string name, string ownerId, string shortName)
         {
             Name = name;
-            CreatorId = creatorId;
+            OwnerId = ownerId;
+            ShortName = shortName;
         }
 
         public DisciplineDTO ToDisciplineDto()
         {
-            DisciplineDTO disciplineDto = new DisciplineDTO(Id, Name, CreatorId);
+            DisciplineDTO disciplineDto = new DisciplineDTO(Id, Name, OwnerId, ShortName);
             return disciplineDto;
         }
     }
@@ -40,14 +43,16 @@ namespace CloudServise_API.Models
     {
         public Guid Id { get; set; }
         public string Name { get; set; }
-        public string CreatorId { get; set; }
+        public string ShortName { get; set; }
+        public string OwnerId { get; set; }
 
         public DisciplineDTO() {}
-        public DisciplineDTO(Guid id, string name, string creatorId)
+        public DisciplineDTO(Guid id, string name, string ownerId, string shortName)
         {
             Id = id;
             Name = name;
-            CreatorId = creatorId;
+            OwnerId = ownerId;
+            ShortName = shortName;
         }
     }
 }

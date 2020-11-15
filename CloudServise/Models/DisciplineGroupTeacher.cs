@@ -5,7 +5,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace CloudServise_API.Models
+namespace CloudService_API.Models
 {
     public class DisciplineGroupTeacher
     {

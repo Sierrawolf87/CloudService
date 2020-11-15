@@ -2,14 +2,14 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using CloudService_API.Data;
+using CloudService_API.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using CloudServise_API.Data;
-using CloudServise_API.Models;
 using Microsoft.Extensions.Logging;
 
-namespace CloudServise_API.Controllers
+namespace CloudService_API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]

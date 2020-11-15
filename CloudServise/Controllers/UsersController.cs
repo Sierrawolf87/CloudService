@@ -2,14 +2,14 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using CloudService_API.Data;
+using CloudService_API.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using CloudServise_API.Data;
-using CloudServise_API.Models;
 using Microsoft.Extensions.Logging;
 
-namespace CloudServise_API.Controllers
+namespace CloudService_API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
@@ -29,7 +29,7 @@ namespace CloudServise_API.Controllers
         public async Task<ActionResult<IEnumerable<UserDTO>>> GetUsers()
         {
             List<UserDTO> userDtos = new List<UserDTO>();
-            var actionResult = await _context.Users.ToListAsync();
+            var actionResult = await _context.Users.Include(c => c.Role).ToListAsync();
             foreach (var user in actionResult)
             {
                 userDtos.Add(user.ToUserDto());
@@ -41,7 +41,7 @@ namespace CloudServise_API.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<UserDTO>> GetUser(Guid id)
         {
-            var user = await _context.Users.FindAsync(id);
+            var user = await _context.Users.Include(c => c.Role).FirstOrDefaultAsync(i => i.Id == id);
             if (user == null)
             {
                 return NotFound();
@@ -51,8 +51,6 @@ namespace CloudServise_API.Controllers
         }
 
         // PUT: api/Users/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to, for
-        // more details, see https://go.microsoft.com/fwlink/?linkid=2123754.
         [HttpPut("{id}")]
         public async Task<IActionResult> PutUser(Guid id, UserDTO user)
         {
@@ -91,10 +89,8 @@ namespace CloudServise_API.Controllers
         }
 
         // POST: api/Users
-        // To protect from overposting attacks, enable the specific properties you want to bind to, for
-        // more details, see https://go.microsoft.com/fwlink/?linkid=2123754.
         [HttpPost]
-        public async Task<ActionResult<UserDTO>> PostUser(User user)
+        public async Task<ActionResult<UserDTO>> PostUser(UserRegisterDTO user)
         {
             var role = await _context.Roles.FindAsync(user.Role.Id);
             if (role == null)
@@ -131,7 +127,7 @@ namespace CloudServise_API.Controllers
             {
                 _context.Users.Remove(user);
                 await _context.SaveChangesAsync();
-                return Ok(user);
+                return Ok(user.ToUserDto());
             }
             catch (Exception ex)
             {

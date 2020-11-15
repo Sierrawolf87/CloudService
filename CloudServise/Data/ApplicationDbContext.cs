@@ -1,12 +1,12 @@
-﻿using CloudServise_API.Models;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using CloudService_API.Models;
 
-namespace CloudServise_API.Data
+namespace CloudService_API.Data
 {
     public class ApplicationDbContext : DbContext
     {
@@ -18,6 +18,7 @@ namespace CloudServise_API.Data
         public DbSet<Role> Roles { get; set; }
         public DbSet<Discipline> Disciplines { get; set; }
         public DbSet<Group> Groups { get; set; }
+        public DbSet<GroupUser> GroupUsers { get; set; }
         public DbSet<DisciplineGroupTeacher> DisciplineGroupTeacher { get; set; }
         public DbSet<File> Files { get; set; }
         public DbSet<LaboratoryWork> LaboratoryWorks { get; set; }

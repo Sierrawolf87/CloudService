@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore.Migrations;
 
-namespace CloudServise_API.Migrations
+namespace CloudService_API.Migrations
 {
     public partial class InitialCreate : Migration
     {

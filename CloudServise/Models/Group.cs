@@ -5,7 +5,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace CloudServise_API.Models
+namespace CloudService_API.Models
 {
     public class Group
     {
@@ -17,6 +17,8 @@ namespace CloudServise_API.Models
         public string Name { get; set; }
 
         public List<DisciplineGroupTeacher> DisciplineGroupTeachers { get; set; }
+
+        public List<GroupUser> GroupsUsers { get; set; }
 
         public Group() {}
         public Group(string name)

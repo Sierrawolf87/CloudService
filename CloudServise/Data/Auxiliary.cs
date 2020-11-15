@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Cryptography.KeyDerivation;
 
-namespace CloudServise_API.Data
+namespace CloudService_API.Data
 {
     public static class Auxiliary
     {
@@ -25,6 +25,12 @@ namespace CloudServise_API.Data
                 numBytesRequested: 256 / 8));
 
             return hashed;
+        }
+
+        public static string GetExtension(string path)
+        {
+            var split = path.Split('.');
+            return $".{split.Last()}";
         }
     }
 }
