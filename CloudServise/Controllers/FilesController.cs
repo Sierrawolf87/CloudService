@@ -36,7 +36,7 @@ namespace CloudService_API.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<FileDTO>>> GetFilesInfo()
         {
-            var find = await _context.Files.ToListAsync();
+            var find = await _context.Files.Include(c => c.Solution).Include(c => c.Requirement).ToListAsync();
             List<FileDTO> dtos = new List<FileDTO>();
             foreach (var item in find)
             {
@@ -131,7 +131,7 @@ namespace CloudService_API.Controllers
             
             try
             {
-                var solution = await _context.Solutions.Include(c => c.Files).FirstOrDefaultAsync();
+                var solution = await _context.Solutions.Include(c => c.Files).Where(s => s.Id == solutionId).FirstOrDefaultAsync();
                 var fileList = solution.Files;
                 var user = await _context.Users.FindAsync(solution.OwnerId);
                 var laboratoryWork = await _context.LaboratoryWorks.FindAsync(solution.LaboratoryWorkId);
@@ -144,10 +144,11 @@ namespace CloudService_API.Controllers
 
                 ZipArchive zipArchive = new ZipArchive(fsOut, ZipArchiveMode.Update);
                 foreach (var file in fileList)
-                {   
+                {
                     zipArchive.CreateEntryFromFile(file.PathToFile, file.Name, CompressionLevel.NoCompression);
                 }
 
+                zipArchive.Dispose();
                 await fsOut.DisposeAsync();
                 fsOut = new FileStream(zipPath, FileMode.Open);
                 string zipName = $"{user.ToUserDto().Initials} {group.First().Name} {discipline.ShortName} - {laboratoryWork.Name}.zip";
