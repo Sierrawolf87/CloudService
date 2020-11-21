@@ -25,25 +25,25 @@ namespace CloudService_API.Models
         public File() {}
 
         // Конструктор для создания условий лабораторной работы
-        public File(string name, Guid ownerId, Requirement requirement)
+        public File(string name, Guid ownerId, Requirement requirement, string pathToDirectory)
         {
             Name = name;
             OwnerId = ownerId;
             Requirement = requirement;
             Guid laboratoryWorkId = requirement.LaboratoryWorkId;
-            PathToFile = @$"C:\CloudService\Files\{ownerId}\{laboratoryWorkId}\{Guid.NewGuid()}{Auxiliary.GetExtension(name)}";
-            PathToDirectory = @$"C:\CloudService\Files\{OwnerId}\{laboratoryWorkId}";
+            PathToFile = @$"{pathToDirectory}\{ownerId}\{laboratoryWorkId}\{Guid.NewGuid()}{Auxiliary.GetExtension(name)}";
+            PathToDirectory = @$"{pathToDirectory}\{OwnerId}\{laboratoryWorkId}";
         }
 
         // Констроктор для создания решения от студента
-        public File(string name, Guid ownerId, Solution solution)
+        public File(string name, Guid ownerId, Solution solution, string pathToDirectory)
         {
             Name = name;
             OwnerId = ownerId;
             Solution = solution;
             Guid laboratoryWorkId = solution.LaboratoryWorkId;
-            PathToFile = @$"C:\CloudService\Files\{ownerId}\{laboratoryWorkId}\{Guid.NewGuid()}{Auxiliary.GetExtension(name)}";
-            PathToDirectory = @$"C:\CloudService\Files\{OwnerId}\{laboratoryWorkId}";
+            PathToFile = @$"{pathToDirectory}\{ownerId}\{laboratoryWorkId}\{Guid.NewGuid()}{Auxiliary.GetExtension(name)}";
+            PathToDirectory = @$"{pathToDirectory}\{OwnerId}\{laboratoryWorkId}";
         }
 
         public FileDTO ToFileDto()

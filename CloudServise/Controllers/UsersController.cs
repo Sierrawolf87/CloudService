@@ -1,13 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using CloudService_API.Data;
 using CloudService_API.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Microsoft.IdentityModel.Tokens;
 
 namespace CloudService_API.Controllers
 {
@@ -17,14 +21,17 @@ namespace CloudService_API.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly ILogger<UsersController> _logger;
+        private readonly PasswordHashSettings _passwordHashSettings;
 
-        public UsersController(ApplicationDbContext context, ILogger<UsersController> logger)
+        public UsersController(ApplicationDbContext context, ILogger<UsersController> logger, PasswordHashSettings passwordHashSettings)
         {
             _context = context;
             _logger = logger;
+            _passwordHashSettings = passwordHashSettings;
         }
 
         // GET: api/Users
+        [Authorize]
         [HttpGet]
         public async Task<ActionResult<IEnumerable<UserDTO>>> GetUsers()
         {
@@ -37,8 +44,9 @@ namespace CloudService_API.Controllers
             return userDtos;
         }
 
+
         // GET: api/Users/5
-        [HttpGet("{id}")]
+            [HttpGet("{id}")]
         public async Task<ActionResult<UserDTO>> GetUser(Guid id)
         {
             var user = await _context.Users.Include(c => c.Role).FirstOrDefaultAsync(i => i.Id == id);
@@ -98,7 +106,7 @@ namespace CloudService_API.Controllers
                 return BadRequest();
             }
 
-            var newUser = new User(user.Name, user.Surname, user.Patronymic, user.ReportCard, role);
+            var newUser = new User(user.Name, user.Surname, user.Patronymic, user.ReportCard, role, _passwordHashSettings.HashKey);
 
             try
             {
@@ -134,6 +142,56 @@ namespace CloudService_API.Controllers
                 _logger.LogError(ex.Message);
                 return StatusCode(500);
             }
+        }
+        
+        [HttpPost("GetToken")]
+        public async Task<IActionResult> GetToken([FromForm] string username, [FromForm] string password)
+        {
+            var identity = await GetIdentity(username, password);
+            if (identity == null)
+            {
+                return BadRequest(new { errorText = "Invalid username or password." });
+            }
+
+            var now = DateTime.UtcNow;
+            // создаем JWT-токен
+            var jwt = new JwtSecurityToken(
+                issuer: AuthOptions.ISSUER,
+                audience: AuthOptions.AUDIENCE,
+                notBefore: now,
+                claims: identity.Claims,
+                expires: now.Add(TimeSpan.FromMinutes(AuthOptions.LIFETIME)),
+                signingCredentials: new SigningCredentials(AuthOptions.GetSymmetricSecurityKey(), SecurityAlgorithms.HmacSha256));
+            var encodedJwt = new JwtSecurityTokenHandler().WriteToken(jwt);
+
+            var response = new
+            {
+                access_token = encodedJwt,
+                username = identity.Name
+            };
+
+            return Ok(response);
+        }
+
+        private async Task<ClaimsIdentity> GetIdentity(string username, string password)
+        {
+            var task = await Task.Run(() =>
+            {
+                var user = _context.Users.Include(c => c.Role)
+                    .FirstOrDefault(x => x.UserName == username && x.Password == Auxiliary.GenerateHashPassword(password, _passwordHashSettings.HashKey));
+                if (user == null) return null;
+                var claims = new List<Claim>
+                {
+                    new Claim(ClaimsIdentity.DefaultNameClaimType, user.UserName),
+                    new Claim(ClaimsIdentity.DefaultRoleClaimType, user.Role.Name)
+                };
+                ClaimsIdentity claimsIdentity =
+                    new ClaimsIdentity(claims, "Token", ClaimsIdentity.DefaultNameClaimType,
+                        ClaimsIdentity.DefaultRoleClaimType);
+                return claimsIdentity;
+            });
+
+            return task;
         }
 
         private bool UserExists(Guid id)

@@ -25,11 +25,13 @@ namespace CloudService_API.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly ILogger<FilesController> _logger;
+        private readonly FilePathSettings _filePathSettings;
 
-        public FilesController(ApplicationDbContext context, ILogger<FilesController> logger)
+        public FilesController(ApplicationDbContext context, ILogger<FilesController> logger, FilePathSettings filePathSettings)
         {
             _context = context;
             _logger = logger;
+            _filePathSettings = filePathSettings;
         }
 
         // GET: api/Files
@@ -121,14 +123,8 @@ namespace CloudService_API.Controllers
         [HttpGet("DownloadSolution/{solutionId}")]
         public async Task<FileResult> DownloadSolution(Guid solutionId)
         {
-            string zipDirectory = @"C:\CloudService\ZIPOut";
-            if (!Directory.Exists(zipDirectory))
-                Directory.CreateDirectory(zipDirectory);
-            string zipPath = @$"C:\CloudService\ZIPOut\{Guid.NewGuid()}.zip";
-
-            //MemoryStream memoryStream = new MemoryStream();
-            FileStream fsOut = new FileStream(zipPath, FileMode.Create);
-            
+            await using MemoryStream memoryStream = new MemoryStream();
+            using ZipArchive zipArchive = new ZipArchive(memoryStream, ZipArchiveMode.Create, true);
             try
             {
                 var solution = await _context.Solutions.Include(c => c.Files).Where(s => s.Id == solutionId).FirstOrDefaultAsync();
@@ -137,23 +133,19 @@ namespace CloudService_API.Controllers
                 var laboratoryWork = await _context.LaboratoryWorks.FindAsync(solution.LaboratoryWorkId);
                 var discipline = await _context.Disciplines.FindAsync(laboratoryWork.DisciplineId);
                 var group = await (from contextGroups in _context.Groups
-                    join contextGroupUser in _context.GroupUsers on contextGroups.Id equals contextGroupUser.GroupId
-                    join contextUser in _context.Users on contextGroupUser.UserId equals contextUser.Id
-                    where contextUser.Id == user.Id
-                    select contextGroups).ToListAsync();
+                                   join contextGroupUser in _context.GroupUsers on contextGroups.Id equals contextGroupUser.GroupId
+                                   join contextUser in _context.Users on contextGroupUser.UserId equals contextUser.Id
+                                   where contextUser.Id == user.Id
+                                   select contextGroups).ToListAsync();
+                string zipName = $"{user.ToUserDto().Initials} {group.First().Name} {discipline.ShortName} - {laboratoryWork.Name}.zip";
 
-                ZipArchive zipArchive = new ZipArchive(fsOut, ZipArchiveMode.Update);
                 foreach (var file in fileList)
                 {
                     zipArchive.CreateEntryFromFile(file.PathToFile, file.Name, CompressionLevel.NoCompression);
                 }
 
                 zipArchive.Dispose();
-                await fsOut.DisposeAsync();
-                fsOut = new FileStream(zipPath, FileMode.Open);
-                string zipName = $"{user.ToUserDto().Initials} {group.First().Name} {discipline.ShortName} - {laboratoryWork.Name}.zip";
-                //memoryStream.Position = 0;
-                return File(fsOut, MimeTypesMap.GetMimeType("zip"), zipName);
+                return File(memoryStream.GetBuffer(), MimeTypesMap.GetMimeType("zip"), zipName);
             }
             catch (Exception ex)
             {
@@ -207,7 +199,7 @@ namespace CloudService_API.Controllers
             var findSolution = await _context.Solutions.FindAsync(solutionId);
             foreach (var file in fileCollection)
             {
-                Models.File newFile = new Models.File(file.FileName, fileInfo.OwnerId, findSolution);
+                Models.File newFile = new Models.File(file.FileName, fileInfo.OwnerId, findSolution, _filePathSettings.FolderForFiles);
                 if (!Directory.Exists(newFile.PathToDirectory))
                     Directory.CreateDirectory(newFile.PathToDirectory);
                 await using (var fileStream = new FileStream(newFile.PathToFile, FileMode.Create))
@@ -231,7 +223,7 @@ namespace CloudService_API.Controllers
             var findRequirement = await _context.Requirements.FindAsync(requirementId);
             foreach (var file in fileCollection)
             {
-                Models.File newFile = new Models.File(file.FileName, fileInfo.OwnerId, findRequirement);
+                Models.File newFile = new Models.File(file.FileName, fileInfo.OwnerId, findRequirement, _filePathSettings.FolderForFiles);
                 if (!Directory.Exists(newFile.PathToDirectory))
                     Directory.CreateDirectory(newFile.PathToDirectory);
                 await using (var fileStream = new FileStream(newFile.PathToFile, FileMode.Create))

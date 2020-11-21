@@ -10,9 +10,8 @@ namespace CloudService_API.Data
 {
     public static class Auxiliary
     {
-        public static string GenerateHashPassword(string password)
+        public static string GenerateHashPassword(string password, string sSourceData)
         {
-            var sSourceData = "CloudServise";
             // generate a 128-bit salt using a secure PRNG
             byte[] salt = Encoding.ASCII.GetBytes(sSourceData);
             

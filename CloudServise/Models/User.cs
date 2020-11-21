@@ -30,11 +30,11 @@ namespace CloudService_API.Models
         public List<GroupUser> GroupsUsers { get; set; }
         
         public User() {}
-        public User(string email, string userName, string password, string name, string surname, string patronymic, string reportCard, Role role)
+        public User(string email, string userName, string password, string name, string surname, string patronymic, string reportCard, Role role, string hashKey)
         {
             Email = email;
             UserName = userName;
-            Password = Auxiliary.GenerateHashPassword(password);
+            Password = Auxiliary.GenerateHashPassword(password, hashKey);
             Name = name;
             Surname = surname;
             Patronymic = patronymic;
@@ -42,10 +42,10 @@ namespace CloudService_API.Models
             Role = role;
         }
 
-        public User(string name, string surname, string patronymic, string reportCard, Role role)
+        public User(string name, string surname, string patronymic, string reportCard, Role role, string hashKey)
         {
             UserName = reportCard;
-            Password = Auxiliary.GenerateHashPassword(reportCard);
+            Password = Auxiliary.GenerateHashPassword(reportCard, hashKey);
             Name = name;
             Surname = surname;
             Patronymic = patronymic;
