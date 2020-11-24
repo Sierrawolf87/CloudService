@@ -48,4 +48,11 @@ namespace CloudService_API.Models
             DisciplineId = disciplineId;
         }
     }
+
+    public class CreateLaboratoryWorkDTO
+    {
+        public Guid Id { get; set; }
+        public string Name { get; set; }
+        public Guid DisciplineId { get; set; }
+    }
 }

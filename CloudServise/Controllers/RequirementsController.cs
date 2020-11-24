@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using CloudService_API.Data;
 using CloudService_API.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -11,7 +12,7 @@ using Microsoft.Extensions.Logging;
 
 namespace CloudService_API.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/Disciplines/LaboratoryWorks/[controller]")]
     [ApiController]
     public class RequirementsController : ControllerBase
     {
@@ -24,7 +25,8 @@ namespace CloudService_API.Controllers
             _logger = logger;
         }
 
-        // GET: api/Requirements
+        // GET: api/Disciplines/LaboratoryWorks/Requirements
+        [Authorize]
         [HttpGet]
         public async Task<ActionResult<IEnumerable<RequirementDTO>>> GetRequirements()
         {
@@ -38,7 +40,8 @@ namespace CloudService_API.Controllers
             return dtos;
         }
 
-        // GET: api/Requirements/5
+        // GET: api/Disciplines/LaboratoryWorks/Requirements/5
+        [Authorize]
         [HttpGet("{id}")]
         public async Task<ActionResult<RequirementDTO>> GetRequirement(Guid id)
         {
@@ -52,7 +55,8 @@ namespace CloudService_API.Controllers
             return requirement.ToRequirementDto();
         }
 
-        // PUT: api/Requirements/5
+        // PUT: api/Disciplines/LaboratoryWorks/Requirements/5
+        [Authorize(Roles = "root, admin, network_editor, teacher")]
         [HttpPut("{id}")]
         public async Task<IActionResult> PutRequirement(Guid id, Requirement requirement)
         {
@@ -86,7 +90,8 @@ namespace CloudService_API.Controllers
             return NoContent();
         }
 
-        // POST: api/Requirements
+        // POST: api/Disciplines/LaboratoryWorks/Requirements
+        [Authorize(Roles = "root, admin, network_editor, teacher")]
         [HttpPost]
         public async Task<ActionResult<RequirementDTO>> PostRequirement(CreateRequirementDTO requirement)
         {
@@ -104,7 +109,8 @@ namespace CloudService_API.Controllers
             }
         }
 
-        // DELETE: api/Requirements/5
+        // DELETE: api/Disciplines/LaboratoryWorks/Requirements/5
+        [Authorize(Roles = "root, admin, network_editor, teacher")]
         [HttpDelete("{id}")]
         public async Task<ActionResult<RequirementDTO>> DeleteRequirement(Guid id)
         {

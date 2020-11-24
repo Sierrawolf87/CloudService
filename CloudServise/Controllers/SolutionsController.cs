@@ -4,14 +4,16 @@ using System.Linq;
 using System.Threading.Tasks;
 using CloudService_API.Data;
 using CloudService_API.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 namespace CloudService_API.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/Disciplines/LaboratoryWorks/[controller]")]
     [ApiController]
     public class SolutionsController : ControllerBase
     {
@@ -24,7 +26,8 @@ namespace CloudService_API.Controllers
             _logger = logger;
         }
 
-        // GET: api/Solutions
+        // GET: api/Disciplines/LaboratoryWorks/Solutions
+        [Authorize(Roles = "root, admin, network_editor, teacher")]
         [HttpGet]
         public async Task<ActionResult<IEnumerable<SolutionDTO>>> GetSolutions()
         {
@@ -38,7 +41,8 @@ namespace CloudService_API.Controllers
             return dtos;
         }
 
-        // GET: api/Solutions/5
+        // GET: api/Disciplines/LaboratoryWorks/Solutions/5
+        [Authorize(Roles = "root, admin, network_editor, teacher")]
         [HttpGet("{id}")]
         public async Task<ActionResult<SolutionDTO>> GetSolution(Guid id)
         {
@@ -52,7 +56,25 @@ namespace CloudService_API.Controllers
             return solution.ToSolutionDto();
         }
 
-        // PUT: api/Solutions/5
+        [Authorize(Roles = "student")]
+        [Route("api/Disciplines/LaboratoryWorks/")]
+        [HttpGet("{id}/GetMySolution")]
+        public async Task<ActionResult<SolutionDTO>> GetMySolution(Guid id)
+        {
+            var user = await _context.Users.FindAsync(new Guid(User.Identity.Name));
+            var solution = await _context.Solutions.Include(c => c.LaboratoryWorkId)
+                .Where(c => c.LaboratoryWorkId == id && c.OwnerId == new Guid(User.Identity.Name)).FirstOrDefaultAsync();
+
+            if (solution == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(solution.ToSolutionDto());
+        }
+
+        // PUT: api/Disciplines/LaboratoryWorks/Solutions/5
+        [Authorize(Roles = "root, admin, network_editor, student")]
         [HttpPut("{id}")]
         public async Task<IActionResult> PutSolution(Guid id, SolutionDTO solution)
         {
@@ -87,16 +109,17 @@ namespace CloudService_API.Controllers
             return Ok();
         }
 
-        // POST: api/Solutions
+        // POST: api/Disciplines/LaboratoryWorks/Solutions
+        [Authorize(Roles = "root, admin, network_editor, student")]
         [HttpPost]
         public async Task<ActionResult<SolutionDTO>> PostSolution(CreateSolutionDTO solution)
         {
-            Solution newsolution = new Solution(solution.Description, solution.OwnerId, solution.Mark, solution.LaboratoryWorkId);
+            Solution newSolution = new Solution(solution.Description, new Guid(User.Identity.Name), solution.Mark, solution.LaboratoryWorkId);
             try
             {
-                await _context.Solutions.AddAsync(newsolution);
+                await _context.Solutions.AddAsync(newSolution);
                 await _context.SaveChangesAsync();
-                return Ok(newsolution.ToSolutionDto());
+                return Ok(newSolution.ToSolutionDto());
             }
             catch (Exception ex)
             {
@@ -105,7 +128,8 @@ namespace CloudService_API.Controllers
             }
         }
 
-        // DELETE: api/Solutions/5
+        // DELETE: api/Disciplines/LaboratoryWorks/Solutions/5
+        [Authorize(Roles = "root, admin, network_editor, teacher, student")]
         [HttpDelete("{id}")]
         public async Task<ActionResult<SolutionDTO>> DeleteSolution(Guid id)
         {

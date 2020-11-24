@@ -22,16 +22,18 @@ namespace CloudService_API.Controllers
         private readonly ApplicationDbContext _context;
         private readonly ILogger<UsersController> _logger;
         private readonly PasswordHashSettings _passwordHashSettings;
+        private readonly MailSettings _mailSettings;
 
-        public UsersController(ApplicationDbContext context, ILogger<UsersController> logger, PasswordHashSettings passwordHashSettings)
+        public UsersController(ApplicationDbContext context, ILogger<UsersController> logger, PasswordHashSettings passwordHashSettings, MailSettings mailSettings)
         {
             _context = context;
             _logger = logger;
             _passwordHashSettings = passwordHashSettings;
+            _mailSettings = mailSettings;
         }
 
         // GET: api/Users
-        [Authorize]
+        [Authorize(Roles = "root, admin, network_editor")]
         [HttpGet]
         public async Task<ActionResult<IEnumerable<UserDTO>>> GetUsers()
         {
@@ -44,9 +46,9 @@ namespace CloudService_API.Controllers
             return userDtos;
         }
 
-
         // GET: api/Users/5
-            [HttpGet("{id}")]
+        [Authorize(Roles = "root, admin, network_editor")]
+        [HttpGet("{id}")]
         public async Task<ActionResult<UserDTO>> GetUser(Guid id)
         {
             var user = await _context.Users.Include(c => c.Role).FirstOrDefaultAsync(i => i.Id == id);
@@ -59,6 +61,7 @@ namespace CloudService_API.Controllers
         }
 
         // PUT: api/Users/5
+        [Authorize(Roles = "root, admin, network_editor")]
         [HttpPut("{id}")]
         public async Task<IActionResult> PutUser(Guid id, UserDTO user)
         {
@@ -96,14 +99,14 @@ namespace CloudService_API.Controllers
             return NoContent();
         }
 
-        // POST: api/Users
-        [HttpPost]
-        public async Task<ActionResult<UserDTO>> PostUser(UserRegisterDTO user)
+        // POST: api/Users/auth/SignUp
+        [HttpPost("auth/SignUp")]
+        public async Task<ActionResult<UserDTO>> SignUp(UserRegisterDTO user)
         {
             var role = await _context.Roles.FindAsync(user.Role.Id);
             if (role == null)
             {
-                return BadRequest();
+                return BadRequest("Invalid role Id");
             }
 
             var newUser = new User(user.Name, user.Surname, user.Patronymic, user.ReportCard, role, _passwordHashSettings.HashKey);
@@ -121,7 +124,46 @@ namespace CloudService_API.Controllers
             }
         }
 
+        // Для теста отправки сообщений клиенту
+        [HttpGet("SendEmail/{email}/{subject}/{message}")]
+        public async Task<string> SendEmail(string email, string subject, string message)
+        {
+            await Auxiliary.SendEmailAsync(email, subject, message, _mailSettings);
+            return "Отправлено";
+        }
+
+        //POST: api/users/auth/signin
+        [HttpPost("auth/SignIn")]
+        public async Task<IActionResult> Signin([FromForm] string username, [FromForm] string password)
+        {
+            var identity = await GetIdentity(username, password);
+            if (identity == null)
+            {
+                return BadRequest(new { errorText = "Invalid username or password." });
+            }
+
+            var now = DateTime.UtcNow;
+            var jwt = new JwtSecurityToken(
+                issuer: AuthOptions.ISSUER,
+                audience: AuthOptions.AUDIENCE,
+                notBefore: now,
+                claims: identity.Claims,
+                expires: now.Add(TimeSpan.FromMinutes(AuthOptions.LIFETIME)),
+                signingCredentials: new SigningCredentials(AuthOptions.GetSymmetricSecurityKey(), SecurityAlgorithms.HmacSha256));
+
+            var encodedJwt = new JwtSecurityTokenHandler().WriteToken(jwt);
+
+            var response = new
+            {
+                access_token = encodedJwt,
+                user_id = identity.Name
+            };
+
+            return Ok(response);
+        }
+
         // DELETE: api/Users/5
+        [Authorize(Roles = "root, admin, network_editor")]
         [HttpDelete("{id}")]
         public async Task<ActionResult<User>> DeleteUser(Guid id)
         {
@@ -144,45 +186,18 @@ namespace CloudService_API.Controllers
             }
         }
         
-        [HttpPost("GetToken")]
-        public async Task<IActionResult> GetToken([FromForm] string username, [FromForm] string password)
-        {
-            var identity = await GetIdentity(username, password);
-            if (identity == null)
-            {
-                return BadRequest(new { errorText = "Invalid username or password." });
-            }
-
-            var now = DateTime.UtcNow;
-            // создаем JWT-токен
-            var jwt = new JwtSecurityToken(
-                issuer: AuthOptions.ISSUER,
-                audience: AuthOptions.AUDIENCE,
-                notBefore: now,
-                claims: identity.Claims,
-                expires: now.Add(TimeSpan.FromMinutes(AuthOptions.LIFETIME)),
-                signingCredentials: new SigningCredentials(AuthOptions.GetSymmetricSecurityKey(), SecurityAlgorithms.HmacSha256));
-            var encodedJwt = new JwtSecurityTokenHandler().WriteToken(jwt);
-
-            var response = new
-            {
-                access_token = encodedJwt,
-                username = identity.Name
-            };
-
-            return Ok(response);
-        }
+        
 
         private async Task<ClaimsIdentity> GetIdentity(string username, string password)
         {
-            var task = await Task.Run(() =>
+            var task = await Task.Run(async () =>
             {
-                var user = _context.Users.Include(c => c.Role)
-                    .FirstOrDefault(x => x.UserName == username && x.Password == Auxiliary.GenerateHashPassword(password, _passwordHashSettings.HashKey));
+                var user = await _context.Users.Include(c => c.Role)
+                    .FirstOrDefaultAsync(x => x.UserName == username && x.Password == Auxiliary.GenerateHashPassword(password, _passwordHashSettings.HashKey));
                 if (user == null) return null;
                 var claims = new List<Claim>
                 {
-                    new Claim(ClaimsIdentity.DefaultNameClaimType, user.UserName),
+                    new Claim(ClaimsIdentity.DefaultNameClaimType, user.Id.ToString()),
                     new Claim(ClaimsIdentity.DefaultRoleClaimType, user.Role.Name)
                 };
                 ClaimsIdentity claimsIdentity =

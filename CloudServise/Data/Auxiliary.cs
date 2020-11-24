@@ -1,10 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
+using System.Security.Claims;
 using System.Security.Cryptography;
+using System.Security.Principal;
 using System.Text;
 using System.Threading.Tasks;
+using MailKit.Net.Smtp;
 using Microsoft.AspNetCore.Cryptography.KeyDerivation;
+using MimeKit;
 
 namespace CloudService_API.Data
 {
@@ -30,6 +35,23 @@ namespace CloudService_API.Data
         {
             var split = path.Split('.');
             return $".{split.Last()}";
+        }
+
+        public static async Task SendEmailAsync(string email, string subject, string message, MailSettings mailSettings)
+        {
+            var emailMessage = new MimeMessage();
+
+            emailMessage.From.Add(new MailboxAddress("CloudService", mailSettings.UserName));
+            emailMessage.To.Add(new MailboxAddress("", email));
+            emailMessage.Subject = subject;
+            emailMessage.Body = new TextPart(MimeKit.Text.TextFormat.Html)
+            {
+                Text = message
+            };
+
+            var client = await mailSettings.GetSmtpClient();
+            await client.SendAsync(emailMessage);
+            await client.DisconnectAsync(true);
         }
     }
 }

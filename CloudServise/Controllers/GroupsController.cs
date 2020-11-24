@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using CloudService_API.Data;
 using CloudService_API.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -25,6 +26,7 @@ namespace CloudService_API.Controllers
         }
 
         // GET: api/Groups
+        [Authorize(Roles = "root, admin, network_editor")]
         [HttpGet]
         public async Task<ActionResult<IEnumerable<GroupDTO>>> GetGroups()
         {
@@ -39,6 +41,7 @@ namespace CloudService_API.Controllers
         }
 
         // GET: api/Groups/5
+        [Authorize(Roles = "root, admin, network_editor")]
         [HttpGet("{id}")]
         public async Task<ActionResult<GroupDTO>> GetGroup(Guid id)
         {
@@ -52,7 +55,22 @@ namespace CloudService_API.Controllers
             return find.ToGroupDto();
         }
 
+        [Authorize]
+        [HttpGet("{id}/GetDisciplines")]
+        public async Task<List<DisciplineDTO>> GetDiscipline(Guid id)
+        {
+            var discipline = await _context.Disciplines.Include(c => c.DisciplineGroupTeachers.Where(v => v.GroupId == id)).ToListAsync();
+            List<DisciplineDTO> disciplineDtos = new List<DisciplineDTO>();
+            foreach (var item in discipline)
+            {
+                disciplineDtos.Add(item.ToDisciplineDto());
+            }
+
+            return disciplineDtos;
+        }
+
         // PUT: api/Groups/5
+        [Authorize(Roles = "root, admin, network_editor")]
         [HttpPut("{id}")]
         public async Task<IActionResult> PutGroup(Guid id, GroupDTO groupDto)
         {
@@ -85,6 +103,7 @@ namespace CloudService_API.Controllers
         }
 
         // POST: api/Groups
+        [Authorize(Roles = "root, admin, network_editor")]
         [HttpPost]
         public async Task<ActionResult<GroupDTO>> PostGroup(GroupDTO groupDto)
         {
@@ -103,6 +122,7 @@ namespace CloudService_API.Controllers
         }
 
         // DELETE: api/Groups/5
+        [Authorize(Roles = "root, admin, network_editor")]
         [HttpDelete("{id}")]
         public async Task<ActionResult<GroupDTO>> DeleteGroup(Guid id)
         {

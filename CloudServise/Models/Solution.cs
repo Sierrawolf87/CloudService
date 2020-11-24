@@ -81,7 +81,6 @@ namespace CloudService_API.Models
     public class CreateSolutionDTO
     {
         public Guid Id { get; set; }
-        public Guid OwnerId { get; set; }
         public string Description { get; set; }
         public int Mark { get; set; }
         public Guid LaboratoryWorkId { get; set; }

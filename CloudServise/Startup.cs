@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
 using CloudService_API.Data;
@@ -34,11 +35,19 @@ namespace CloudServise
                 options.UseSqlServer(
                     Configuration.GetConnectionString("DefaultConnection")));
 
+            var filePathSettings = Configuration.GetSection("AppSettings:FilePathSettings").Get<FilePathSettings>() ?? new FilePathSettings();
             services.AddTransient(t => new FilePathSettings());
-            services.AddScoped(s => new FilePathSettings(Configuration["AppSettings:FilePathSettings:PathToFile"]));
+            services.AddScoped(s => new FilePathSettings(filePathSettings));
 
+            var passwordHashSettings = Configuration.GetSection("AppSettings:PasswordHashSettings").Get<PasswordHashSettings>() ?? new PasswordHashSettings();
             services.AddTransient(t => new PasswordHashSettings());
-            services.AddScoped(s => new PasswordHashSettings(Configuration["AppSettings:PasswordHashSettings:HashKey"]));
+            services.AddScoped(s => new PasswordHashSettings(passwordHashSettings));
+
+            var mailSettings = Configuration.GetSection("AppSettings:MailSettings").Get<MailSettings>() ?? new MailSettings();
+            services.AddTransient(t => new MailSettings());
+            services.AddScoped(s => new MailSettings(mailSettings));
+
+            ValidateAppSettings(filePathSettings, passwordHashSettings, mailSettings);
 
             services.AddControllers();
 
@@ -66,6 +75,8 @@ namespace CloudServise
                         ValidateIssuerSigningKey = true,
                     };
                 });
+
+            //  services.AddSwaggerGen();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -87,6 +98,23 @@ namespace CloudServise
             {
                 endpoints.MapControllers();
             });
+
+            //app.UseSwagger();
+            //app.UseSwaggerUI();
+        }
+
+
+
+        private static void ValidateAppSettings(FilePathSettings filePathSettings, PasswordHashSettings passwordHashSettings, MailSettings mailSettings)
+        {
+            var resultsValidation = new List<ValidationResult>();
+
+            Validator.TryValidateObject(filePathSettings, new ValidationContext(filePathSettings), resultsValidation, true);
+            Validator.TryValidateObject(passwordHashSettings, new ValidationContext(passwordHashSettings), resultsValidation, true);
+            Validator.TryValidateObject(mailSettings, new ValidationContext(mailSettings), resultsValidation, true);
+
+            resultsValidation.ForEach(error => Console.WriteLine(error.ErrorMessage));
+            
         }
     }
 }

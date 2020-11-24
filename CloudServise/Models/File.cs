@@ -73,11 +73,4 @@ namespace CloudService_API.Models
                 SolutionId = solution.Id;
         }
     }
-
-    public class FileUploadDTO
-    {
-        public RequirementDTO Requirement { get; set; }
-        public SolutionDTO Solution { get; set; }
-        public Guid OwnerId { get; set; }
-    }
 }

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using CloudService_API.Data;
 using CloudService_API.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -25,6 +26,7 @@ namespace CloudService_API.Controllers
         }
 
         // GET: api/Roles
+        [Authorize(Roles = "root, admin")]
         [HttpGet]
         public async Task<ActionResult<IEnumerable<RoleDTO>>> GetRoles()
         {
@@ -39,6 +41,7 @@ namespace CloudService_API.Controllers
         }
 
         // GET: api/Roles/5
+        [Authorize(Roles = "root, admin")]
         [HttpGet("{id}")]
         public async Task<ActionResult<RoleDTO>> GetRole(Guid id)
         {
@@ -53,8 +56,7 @@ namespace CloudService_API.Controllers
         }
 
         // PUT: api/Roles/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to, for
-        // more details, see https://go.microsoft.com/fwlink/?linkid=2123754.
+        [Authorize(Roles = "root, admin")]
         [HttpPut("{id}")]
         public async Task<IActionResult> PutRole(Guid id, RoleDTO role)
         {
@@ -88,8 +90,7 @@ namespace CloudService_API.Controllers
         }
 
         // POST: api/Roles
-        // To protect from overposting attacks, enable the specific properties you want to bind to, for
-        // more details, see https://go.microsoft.com/fwlink/?linkid=2123754.
+        [Authorize(Roles = "root, admin")]
         [HttpPost]
         public async Task<ActionResult<Role>> PostRole(RoleDTO role)
         {
@@ -109,6 +110,7 @@ namespace CloudService_API.Controllers
         }
 
         // DELETE: api/Roles/5
+        [Authorize(Roles = "root, admin")]
         [HttpDelete("{id}")]
         public async Task<ActionResult<RoleDTO>> DeleteRole(Guid id)
         {

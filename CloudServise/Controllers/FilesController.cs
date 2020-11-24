@@ -4,6 +4,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Net;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using CloudService_API.Data;
 using CloudService_API.Models;
@@ -16,6 +17,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using File = CloudService_API.Models.File;
+using Microsoft.AspNetCore.Authorization;
 
 namespace CloudService_API.Controllers
 {
@@ -35,6 +37,7 @@ namespace CloudService_API.Controllers
         }
 
         // GET: api/Files
+        [Authorize(Roles = "root, admin, network_editor")]
         [HttpGet]
         public async Task<ActionResult<IEnumerable<FileDTO>>> GetFilesInfo()
         {
@@ -49,6 +52,7 @@ namespace CloudService_API.Controllers
         }
 
         // GET: api/Files/5
+        [Authorize]
         [HttpGet("{id}")]
         public async Task<ActionResult<FileDTO>> GetFileInfo(Guid id)
         {
@@ -79,6 +83,7 @@ namespace CloudService_API.Controllers
                     join contextUser in _context.Users on contextGroupUser.UserId equals contextUser.Id
                     where contextUser.Id == user.Id
                     select contextGroups).ToListAsync();
+
                 FileStream fs = new FileStream(file.PathToFile, FileMode.Open);
                 string fileName = $"{user.ToUserDto().Initials} {group.First().Name} ({laboratoryWork.Name} - {discipline.ShortName}){Auxiliary.GetExtension(file.Name)}";
                 return File(fs, MimeTypesMap.GetMimeType(file.Name), fileName);
@@ -101,14 +106,9 @@ namespace CloudService_API.Controllers
                 var requirement = await _context.Requirements.FindAsync(requirementsId);
                 var laboratoryWork = await _context.LaboratoryWorks.FindAsync(requirement.LaboratoryWorkId);
                 var discipline = await _context.Disciplines.FindAsync(laboratoryWork.DisciplineId);
-                var user = await _context.Users.FindAsync(file.OwnerId);
-                var group = await (from contextGroups in _context.Groups
-                    join contextGroupUser in _context.GroupUsers on contextGroups.Id equals contextGroupUser.GroupId
-                    join contextUser in _context.Users on contextGroupUser.UserId equals contextUser.Id
-                    where contextUser.Id == user.Id
-                    select contextGroups).ToListAsync();
+
                 FileStream fs = new FileStream(file.PathToFile, FileMode.Open);
-                string fileName = $"{laboratoryWork.Name} {group.First().Name} {discipline.ShortName}{Auxiliary.GetExtension(file.Name)}";
+                string fileName = $"{laboratoryWork.Name} - {discipline.ShortName}{Auxiliary.GetExtension(file.Name)}";
                 return File(fs, MimeTypesMap.GetMimeType(file.Name), fileName);
             }
             catch (Exception ex)
@@ -118,8 +118,8 @@ namespace CloudService_API.Controllers
             }
         }
 
-        //GET: api/Files/5
-        // Возвращает ZIP архив решения
+        //GET: api/Files/DownloadSolution/5
+        // Возвращает ZIP решения
         [HttpGet("DownloadSolution/{solutionId}")]
         public async Task<FileResult> DownloadSolution(Guid solutionId)
         {
@@ -137,6 +137,7 @@ namespace CloudService_API.Controllers
                                    join contextUser in _context.Users on contextGroupUser.UserId equals contextUser.Id
                                    where contextUser.Id == user.Id
                                    select contextGroups).ToListAsync();
+
                 string zipName = $"{user.ToUserDto().Initials} {group.First().Name} {discipline.ShortName} - {laboratoryWork.Name}.zip";
 
                 foreach (var file in fileList)
@@ -154,10 +155,39 @@ namespace CloudService_API.Controllers
             }
         }
 
+        //GET: api/Files/DownloadRequirements/5
+        // Возвращает zip условия
+        [HttpGet("DownloadRequirements/{solutionId}")]
+        public async Task<FileResult> DownloadRequirements(Guid solutionId)
+        {
+            await using MemoryStream memoryStream = new MemoryStream();
+            using ZipArchive zipArchive = new ZipArchive(memoryStream, ZipArchiveMode.Create, true);
+            try
+            {
+                var requirement = await _context.Requirements.Include(c => c.Files).Where(s => s.Id == solutionId).FirstOrDefaultAsync();
+                var fileList = requirement.Files;
+                var laboratoryWork = await _context.LaboratoryWorks.FindAsync(requirement.LaboratoryWorkId);
+                var discipline = await _context.Disciplines.FindAsync(laboratoryWork.DisciplineId);
+                
+                string zipName = $"{laboratoryWork.Name} - {discipline.ShortName}.zip";
 
-        // Сделать zip условий
+                foreach (var file in fileList)
+                {
+                    zipArchive.CreateEntryFromFile(file.PathToFile, file.Name, CompressionLevel.NoCompression);
+                }
+
+                zipArchive.Dispose();
+                return File(memoryStream.GetBuffer(), MimeTypesMap.GetMimeType("zip"), zipName);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message);
+                return null;
+            }
+        }
 
         // PUT: api/Files/5
+        [Authorize]
         [HttpPut("{id}")]
         public async Task<IActionResult> PutFileInfo(Guid id, FileDTO file)
         {
@@ -192,14 +222,15 @@ namespace CloudService_API.Controllers
 
         // POST: api/Files
         // Загрузка решений студента
+        [Authorize]
         [HttpPost("PostSolutionFiles/{solutionId}")]
-        public async Task<ActionResult<IEnumerable<FileDTO>>> PostSolutionFiles([FromForm] FileUploadDTO fileInfo, [FromForm(Name = "File")] IFormFileCollection fileCollection, Guid solutionId)
+        public async Task<ActionResult<IEnumerable<FileDTO>>> PostSolutionFiles([FromForm(Name = "file")] IFormFileCollection fileCollection, Guid solutionId)
         {
             List<FileDTO> uploadedList = new List<FileDTO>();
             var findSolution = await _context.Solutions.FindAsync(solutionId);
             foreach (var file in fileCollection)
             {
-                Models.File newFile = new Models.File(file.FileName, fileInfo.OwnerId, findSolution, _filePathSettings.FolderForFiles);
+                File newFile = new File(file.FileName, new Guid(User.Identity.Name), findSolution, _filePathSettings.FolderForFiles);
                 if (!Directory.Exists(newFile.PathToDirectory))
                     Directory.CreateDirectory(newFile.PathToDirectory);
                 await using (var fileStream = new FileStream(newFile.PathToFile, FileMode.Create))
@@ -216,14 +247,15 @@ namespace CloudService_API.Controllers
         }
 
         // Загрузка решений студента
+        [Authorize]
         [HttpPost("PostRequirementFiles/{requirementId}")]
-        public async Task<ActionResult<IEnumerable<FileDTO>>> PostRequirementFiles([FromForm] FileUploadDTO fileInfo, [FromForm(Name = "File")] IFormFileCollection fileCollection, Guid requirementId)
+        public async Task<ActionResult<IEnumerable<FileDTO>>> PostRequirementFiles([FromForm(Name = "File")] IFormFileCollection fileCollection, Guid requirementId)
         {
             List<FileDTO> UploadedList = new List<FileDTO>();
             var findRequirement = await _context.Requirements.FindAsync(requirementId);
             foreach (var file in fileCollection)
             {
-                Models.File newFile = new Models.File(file.FileName, fileInfo.OwnerId, findRequirement, _filePathSettings.FolderForFiles);
+                File newFile = new File(file.FileName, new Guid(User.Identity.Name), findRequirement, _filePathSettings.FolderForFiles);
                 if (!Directory.Exists(newFile.PathToDirectory))
                     Directory.CreateDirectory(newFile.PathToDirectory);
                 await using (var fileStream = new FileStream(newFile.PathToFile, FileMode.Create))
@@ -240,6 +272,7 @@ namespace CloudService_API.Controllers
         }
 
         // DELETE: api/Files/5
+        [Authorize]
         [HttpDelete("{id}")]
         public async Task<ActionResult<FileDTO>> DeleteFile(Guid id)
         {

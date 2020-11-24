@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using CloudService_API.Data;
 using CloudService_API.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -11,7 +12,7 @@ using Microsoft.Extensions.Logging;
 
 namespace CloudService_API.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/Disciplines/[controller]")]
     [ApiController]
     public class LaboratoryWorksController : ControllerBase
     {
@@ -24,7 +25,8 @@ namespace CloudService_API.Controllers
             _logger = logger;
         }
 
-        // GET: Discipline/LaboratoryWorks
+        // GET: Disciplines/LaboratoryWorks
+        [Authorize]
         [HttpGet]
         public async Task<ActionResult<IEnumerable<LaboratoryWorkDTO>>> GetLaboratoryWorks()
         {
@@ -37,7 +39,8 @@ namespace CloudService_API.Controllers
             return dtos;
         }
 
-        // GET: Discipline/LaboratoryWorks/5
+        // GET: Disciplines/LaboratoryWorks/5
+        [Authorize]
         [HttpGet("{id}")]
         public async Task<ActionResult<LaboratoryWorkDTO>> GetLaboratoryWork(Guid id)
         {
@@ -51,7 +54,8 @@ namespace CloudService_API.Controllers
             return laboratoryWork.ToLaboratoryWorkDto();
         }
 
-        // PUT: Discipline/LaboratoryWorks/5
+        // PUT: Disciplines/LaboratoryWorks/5
+        [Authorize(Roles = "root, admin, network_editor, teacher")]
         [HttpPut("{id}")]
         public async Task<IActionResult> PutLaboratoryWork(Guid id, LaboratoryWorkDTO laboratoryWorkDto)
         {
@@ -86,17 +90,18 @@ namespace CloudService_API.Controllers
             return NoContent();
         }
 
-        // POST: Discipline/LaboratoryWorks
+        // POST: Disciplines/LaboratoryWorks
+        [Authorize(Roles = "root, admin, network_editor, teacher")]
         [HttpPost]
-        public async Task<ActionResult<LaboratoryWorkDTO>> PostLaboratoryWork(LaboratoryWorkDTO laboratoryWorkDto)
+        public async Task<ActionResult<LaboratoryWorkDTO>> PostLaboratoryWork(CreateLaboratoryWorkDTO laboratoryWorkDto)
         {
-            LaboratoryWork newlaboratoryWork = new LaboratoryWork(laboratoryWorkDto.Name, laboratoryWorkDto.OwnerId, laboratoryWorkDto.DisciplineId);
+            LaboratoryWork newLaboratoryWork = new LaboratoryWork(laboratoryWorkDto.Name, new Guid(User.Identity.Name), laboratoryWorkDto.DisciplineId);
 
             try
             {
-                await _context.AddAsync(newlaboratoryWork);
+                await _context.AddAsync(newLaboratoryWork);
                 await _context.SaveChangesAsync();
-                return newlaboratoryWork.ToLaboratoryWorkDto();
+                return newLaboratoryWork.ToLaboratoryWorkDto();
             }
             catch (Exception ex)
             {
@@ -105,7 +110,8 @@ namespace CloudService_API.Controllers
             }
         }
 
-        // DELETE: Discipline/LaboratoryWorks/5
+        // DELETE: Disciplines/LaboratoryWorks/5
+        [Authorize(Roles = "root, admin, network_editor, teacher")]
         [HttpDelete("{id}")]
         public async Task<ActionResult<LaboratoryWorkDTO>> DeleteLaboratoryWork(Guid id)
         {

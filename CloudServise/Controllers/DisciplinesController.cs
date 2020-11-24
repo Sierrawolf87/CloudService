@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using CloudService_API.Data;
 using CloudService_API.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -25,6 +26,7 @@ namespace CloudService_API.Controllers
         }
 
         // GET: api/Disciplines
+        [Authorize]
         [HttpGet]
         public async Task<ActionResult<IEnumerable<DisciplineDTO>>> GetDisciplines()
         {
@@ -39,6 +41,7 @@ namespace CloudService_API.Controllers
         }
 
         // GET: api/Disciplines/5
+        [Authorize]
         [HttpGet("{id}")]
         public async Task<ActionResult<DisciplineDTO>> GetDiscipline(Guid id)
         {
@@ -53,8 +56,7 @@ namespace CloudService_API.Controllers
         }
 
         // PUT: api/Disciplines/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to, for
-        // more details, see https://go.microsoft.com/fwlink/?linkid=2123754.
+        [Authorize(Roles = "root, admin, network_editor, teacher")]
         [HttpPut("{id}")]
         public async Task<IActionResult> PutDiscipline(Guid id, DisciplineDTO discipline)
         {
@@ -89,12 +91,11 @@ namespace CloudService_API.Controllers
         }
 
         // POST: api/Disciplines
-        // To protect from overposting attacks, enable the specific properties you want to bind to, for
-        // more details, see https://go.microsoft.com/fwlink/?linkid=2123754.
+        [Authorize(Roles = "root, admin, network_editor, teacher")]
         [HttpPost]
-        public async Task<ActionResult<DisciplineDTO>> PostDiscipline(DisciplineDTO disciplineDto)
+        public async Task<ActionResult<DisciplineDTO>> PostDiscipline(CreateDisciplineDTO disciplineDto)
         {
-            Discipline discipline =new Discipline(disciplineDto.Name, disciplineDto.OwnerId, disciplineDto.ShortName);
+            Discipline discipline = new Discipline(disciplineDto.Name, new Guid(User.Identity.Name), disciplineDto.ShortName);
             try
             {
                 await _context.Disciplines.AddAsync(discipline);
@@ -109,6 +110,7 @@ namespace CloudService_API.Controllers
         }
 
         // DELETE: api/Disciplines/5
+        [Authorize(Roles = "root, admin, network_editor, teacher")]
         [HttpDelete("{id}")]
         public async Task<ActionResult<DisciplineDTO>> DeleteDiscipline(Guid id)
         {

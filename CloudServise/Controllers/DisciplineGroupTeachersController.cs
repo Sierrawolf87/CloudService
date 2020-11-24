@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using CloudService_API.Data;
 using CloudService_API.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -25,6 +26,7 @@ namespace CloudService_API.Controllers
         }
 
         // GET: api/DisciplineGroupTeachers
+        [Authorize(Roles = "root, admin, network_editor")]
         [HttpGet]
         public async Task<ActionResult<IEnumerable<DisciplineGroupTeacherDTO>>> GetDisciplineGroupTeacher()
         {
@@ -39,6 +41,7 @@ namespace CloudService_API.Controllers
         }
 
         // GET: api/DisciplineGroupTeachers/5
+        [Authorize(Roles = "root, admin, network_editor")]
         [HttpGet("{id}")]
         public async Task<ActionResult<DisciplineGroupTeacherDTO>> GetDisciplineGroupTeacher(Guid id)
         {
@@ -53,6 +56,7 @@ namespace CloudService_API.Controllers
         }
 
         // PUT: api/DisciplineGroupTeachers/5
+        [Authorize(Roles = "root, admin, network_editor")]
         [HttpPut("{id}")]
         public async Task<IActionResult> PutDisciplineGroupTeacher(Guid id, DisciplineGroupTeacherDTO dto)
         {
@@ -87,6 +91,7 @@ namespace CloudService_API.Controllers
         }
 
         // POST: api/DisciplineGroupTeachers
+        [Authorize(Roles = "root, admin, network_editor")]
         [HttpPost]
         public async Task<ActionResult<DisciplineGroupTeacherDTO>> PostDisciplineGroupTeacher(DisciplineGroupTeacherDTO dto)
         {
@@ -105,6 +110,7 @@ namespace CloudService_API.Controllers
         }
 
         // DELETE: api/DisciplineGroupTeachers/5
+        [Authorize(Roles = "root, admin, network_editor")]
         [HttpDelete("{id}")]
         public async Task<ActionResult<DisciplineGroupTeacherDTO>> DeleteDisciplineGroupTeacher(Guid id)
         {

@@ -18,14 +18,14 @@ namespace CloudService_API.Models
         public string ShortName { get; set; }
 
         [Required]
-        public string OwnerId { get; set; }
+        public Guid OwnerId { get; set; }
 
         public List<DisciplineGroupTeacher> DisciplineGroupTeachers { get; set; }
 
         public List<LaboratoryWork> Laboratories { get; set; }
 
         public Discipline() {}
-        public Discipline(string name, string ownerId, string shortName)
+        public Discipline(string name, Guid ownerId, string shortName)
         {
             Name = name;
             OwnerId = ownerId;
@@ -44,15 +44,22 @@ namespace CloudService_API.Models
         public Guid Id { get; set; }
         public string Name { get; set; }
         public string ShortName { get; set; }
-        public string OwnerId { get; set; }
+        public Guid OwnerId { get; set; }
 
         public DisciplineDTO() {}
-        public DisciplineDTO(Guid id, string name, string ownerId, string shortName)
+        public DisciplineDTO(Guid id, string name, Guid ownerId, string shortName)
         {
             Id = id;
             Name = name;
             OwnerId = ownerId;
             ShortName = shortName;
         }
+    }
+
+    public class CreateDisciplineDTO
+    {
+        public Guid Id { get; set; }
+        public string Name { get; set; }
+        public string ShortName { get; set; }
     }
 }
