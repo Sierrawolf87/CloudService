@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using CloudService_API.Data;
 using CloudService_API.Models;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;

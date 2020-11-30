@@ -9,12 +9,12 @@ namespace CloudService_API.Data
 {
     public class MailSettings : IValidatableObject
     {
-        private string Host { get; set; }
-        private string Port { get; set; }
-        private string UseSsl { get; set; }
+        public string Host { get; set; }
+        public string Port { get; set; }
+        public string UseSsl { get; set; }
 
-        public string UserName { get; private set; }
-        private string Password { get; set; }
+        public string UserName { get; set; }
+        public string Password { get; set; }
 
         public MailSettings() {}
         public MailSettings(MailSettings settings)

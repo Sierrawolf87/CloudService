@@ -49,8 +49,7 @@ namespace CloudServise
 
             ValidateAppSettings(filePathSettings, passwordHashSettings, mailSettings);
 
-            services.AddControllers();
-
+            
             services.Configure<FormOptions>(x =>
             {
                 x.ValueLengthLimit = int.MaxValue;
@@ -77,11 +76,16 @@ namespace CloudServise
                 });
 
             //  services.AddSwaggerGen();
+
+            services.AddCors(o => o.AddPolicy("AllowAll", builder => builder.AllowAnyOrigin().AllowAnyHeader()));
+
+            services.AddControllers();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
+
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
@@ -94,10 +98,13 @@ namespace CloudServise
             app.UseAuthentication();
             app.UseAuthorization();
 
+            app.UseCors("AllowAll");
+
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
             });
+
 
             //app.UseSwagger();
             //app.UseSwaggerUI();

@@ -57,6 +57,7 @@ namespace CloudService_API.Models
         {
             UserDTO userDto = new UserDTO();
             userDto.Id = Id;
+            userDto.UserName = UserName;
             userDto.Email = Email;
             userDto.Name = Name;
             userDto.Surname = Surname;
