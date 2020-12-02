@@ -9,7 +9,7 @@ namespace CloudService_API.Models
 {
     public class Group
     {
-        [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        [Key]
         public Guid Id { get; set; }
 
         [Required]
@@ -18,7 +18,7 @@ namespace CloudService_API.Models
 
         public List<DisciplineGroupTeacher> DisciplineGroupTeachers { get; set; }
 
-        public List<GroupUser> GroupsUsers { get; set; }
+        public List<User> Users { get; set; }
 
         public Group() {}
         public Group(string name)

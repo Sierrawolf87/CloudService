@@ -18,7 +18,6 @@ namespace CloudService_API.Data
         public DbSet<Role> Roles { get; set; }
         public DbSet<Discipline> Disciplines { get; set; }
         public DbSet<Group> Groups { get; set; }
-        public DbSet<GroupUser> GroupUsers { get; set; }
         public DbSet<DisciplineGroupTeacher> DisciplineGroupTeacher { get; set; }
         public DbSet<File> Files { get; set; }
         public DbSet<LaboratoryWork> LaboratoryWorks { get; set; }

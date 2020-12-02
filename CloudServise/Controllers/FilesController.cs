@@ -77,15 +77,10 @@ namespace CloudService_API.Controllers
                 var solution = await _context.Solutions.FindAsync(solutionId);
                 var laboratoryWork = await _context.LaboratoryWorks.FindAsync(solution.LaboratoryWorkId);
                 var discipline = await _context.Disciplines.FindAsync(laboratoryWork.DisciplineId);
-                var user = await _context.Users.FindAsync(file.OwnerId);
-                var group = await (from contextGroups in _context.Groups
-                    join contextGroupUser in _context.GroupUsers on contextGroups.Id equals contextGroupUser.GroupId
-                    join contextUser in _context.Users on contextGroupUser.UserId equals contextUser.Id
-                    where contextUser.Id == user.Id
-                    select contextGroups).ToListAsync();
+                var user = await _context.Users.Include(c => c.Group).FirstOrDefaultAsync(f => f.Id == file.OwnerId);
 
                 FileStream fs = new FileStream(file.PathToFile, FileMode.Open);
-                string fileName = $"{user.ToUserDto().Initials} {group.First().Name} ({laboratoryWork.Name} - {discipline.ShortName}){Auxiliary.GetExtension(file.Name)}";
+                string fileName = $"{user.ToUserDto().Initials} {user.Group.Name} ({laboratoryWork.Name} - {discipline.ShortName}){Auxiliary.GetExtension(file.Name)}";
                 return File(fs, MimeTypesMap.GetMimeType(file.Name), fileName);
             }
             catch (Exception ex)
@@ -129,16 +124,11 @@ namespace CloudService_API.Controllers
             {
                 var solution = await _context.Solutions.Include(c => c.Files).Where(s => s.Id == solutionId).FirstOrDefaultAsync();
                 var fileList = solution.Files;
-                var user = await _context.Users.FindAsync(solution.OwnerId);
+                var user = await _context.Users.Include(c => c.Group).FirstOrDefaultAsync(f => f.Id == solution.OwnerId);
                 var laboratoryWork = await _context.LaboratoryWorks.FindAsync(solution.LaboratoryWorkId);
                 var discipline = await _context.Disciplines.FindAsync(laboratoryWork.DisciplineId);
-                var group = await (from contextGroups in _context.Groups
-                                   join contextGroupUser in _context.GroupUsers on contextGroups.Id equals contextGroupUser.GroupId
-                                   join contextUser in _context.Users on contextGroupUser.UserId equals contextUser.Id
-                                   where contextUser.Id == user.Id
-                                   select contextGroups).ToListAsync();
 
-                string zipName = $"{user.ToUserDto().Initials} {group.First().Name} {discipline.ShortName} - {laboratoryWork.Name}.zip";
+                string zipName = $"{user.ToUserDto().Initials} {user.Group.Name} {discipline.ShortName} - {laboratoryWork.Name}.zip";
 
                 foreach (var file in fileList)
                 {

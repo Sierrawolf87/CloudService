@@ -4,14 +4,16 @@ using CloudService_API.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace CloudService_API.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20201202154143_Correction_1")]
+    partial class Correction_1
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -115,6 +117,27 @@ namespace CloudService_API.Migrations
                     b.ToTable("Groups");
                 });
 
+            modelBuilder.Entity("CloudService_API.Models.GroupUser", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("GroupId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GroupId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("GroupUsers");
+                });
+
             modelBuilder.Entity("CloudService_API.Models.LaboratoryWork", b =>
                 {
                     b.Property<Guid>("Id")
@@ -204,9 +227,6 @@ namespace CloudService_API.Migrations
                     b.Property<string>("Email")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<Guid?>("GroupId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<string>("Name")
                         .HasColumnType("nvarchar(max)");
 
@@ -229,8 +249,6 @@ namespace CloudService_API.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("GroupId");
 
                     b.HasIndex("RoleId");
 
@@ -279,6 +297,25 @@ namespace CloudService_API.Migrations
                     b.Navigation("Solution");
                 });
 
+            modelBuilder.Entity("CloudService_API.Models.GroupUser", b =>
+                {
+                    b.HasOne("CloudService_API.Models.Group", "Group")
+                        .WithMany("GroupsUsers")
+                        .HasForeignKey("GroupId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("CloudService_API.Models.User", "User")
+                        .WithMany("GroupsUsers")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Group");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("CloudService_API.Models.LaboratoryWork", b =>
                 {
                     b.HasOne("CloudService_API.Models.Discipline", "Discipline")
@@ -314,15 +351,9 @@ namespace CloudService_API.Migrations
 
             modelBuilder.Entity("CloudService_API.Models.User", b =>
                 {
-                    b.HasOne("CloudService_API.Models.Group", "Group")
-                        .WithMany("Users")
-                        .HasForeignKey("GroupId");
-
                     b.HasOne("CloudService_API.Models.Role", "Role")
                         .WithMany("Users")
                         .HasForeignKey("RoleId");
-
-                    b.Navigation("Group");
 
                     b.Navigation("Role");
                 });
@@ -338,7 +369,7 @@ namespace CloudService_API.Migrations
                 {
                     b.Navigation("DisciplineGroupTeachers");
 
-                    b.Navigation("Users");
+                    b.Navigation("GroupsUsers");
                 });
 
             modelBuilder.Entity("CloudService_API.Models.Requirement", b =>
@@ -359,6 +390,8 @@ namespace CloudService_API.Migrations
             modelBuilder.Entity("CloudService_API.Models.User", b =>
                 {
                     b.Navigation("DisciplineGroupTeachers");
+
+                    b.Navigation("GroupsUsers");
                 });
 #pragma warning restore 612, 618
         }

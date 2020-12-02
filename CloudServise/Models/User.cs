@@ -24,13 +24,12 @@ namespace CloudService_API.Models
         public string ReportCard { get; set; }
 
         public Role Role { get; set; }
+        public Group Group { get; set; }
 
         public List<DisciplineGroupTeacher> DisciplineGroupTeachers { get; set; }
 
-        public List<GroupUser> GroupsUsers { get; set; }
-        
         public User() {}
-        public User(string email, string userName, string password, string name, string surname, string patronymic, string reportCard, Role role, string hashKey)
+        public User(string email, string userName, string password, string name, string surname, string patronymic, string reportCard, Role role, Group group, string hashKey)
         {
             Email = email;
             UserName = userName;
@@ -40,9 +39,10 @@ namespace CloudService_API.Models
             Patronymic = patronymic;
             ReportCard = reportCard;
             Role = role;
+            Group = group;
         }
 
-        public User(string name, string surname, string patronymic, string reportCard, Role role, string hashKey)
+        public User(string name, string surname, string patronymic, string reportCard, Role role, Group group, string hashKey)
         {
             UserName = reportCard;
             Password = Auxiliary.GenerateHashPassword(reportCard, hashKey);
@@ -51,6 +51,7 @@ namespace CloudService_API.Models
             Patronymic = patronymic;
             ReportCard = reportCard;
             Role = role;
+            Group = group;
         }
 
         public UserDTO ToUserDto()
@@ -64,6 +65,7 @@ namespace CloudService_API.Models
             userDto.Patronymic = Patronymic;
             userDto.ReportCard = ReportCard;
             userDto.Role = Role?.ToRoleDTO();
+            userDto.Group = Group?.ToGroupDto();
             return userDto;
         }
 
@@ -82,6 +84,7 @@ namespace CloudService_API.Models
         public string ReportCard { get; set; }
 
         public RoleDTO Role { get; set; }
+        public GroupDTO Group { get; set; }
 
     }
 
@@ -93,5 +96,7 @@ namespace CloudService_API.Models
         public string ReportCard { get; set; }
 
         public RoleDTO Role { get; set; }
+
+        public GroupDTO Group { get; set; }
     }
 }

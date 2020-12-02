@@ -9,7 +9,7 @@ namespace CloudService_API.Models
 {
     public class DisciplineGroupTeacher
     {
-        [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        [Key]
         public Guid Id { get; set; }
 
         [Required]

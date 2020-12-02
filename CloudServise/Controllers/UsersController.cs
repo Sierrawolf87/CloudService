@@ -110,7 +110,13 @@ namespace CloudService_API.Controllers
                 return BadRequest("Invalid role Id");
             }
 
-            var newUser = new User(user.Name, user.Surname, user.Patronymic, user.ReportCard, role, _passwordHashSettings.HashKey);
+            var group = await _context.Groups.FindAsync(user.Group.Id);
+            if (group == null)
+            {
+                return BadRequest("Invalid group Id");
+            }
+
+            var newUser = new User(user.Name, user.Surname, user.Patronymic, user.ReportCard, role, group, _passwordHashSettings.HashKey);
 
             try
             {
