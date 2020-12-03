@@ -57,12 +57,10 @@ namespace CloudService_API.Controllers
         }
 
         [Authorize(Roles = "student")]
-        [Route("api/Disciplines/LaboratoryWorks/")]
         [HttpGet("{id}/GetMySolution")]
         public async Task<ActionResult<SolutionDTO>> GetMySolution(Guid id)
         {
-            var user = await _context.Users.FindAsync(new Guid(User.Identity.Name));
-            var solution = await _context.Solutions.Include(c => c.LaboratoryWorkId)
+            var solution = await _context.Solutions.Include(c => c.LaboratoryWork)
                 .Where(c => c.LaboratoryWorkId == id && c.OwnerId == new Guid(User.Identity.Name)).FirstOrDefaultAsync();
 
             if (solution == null)

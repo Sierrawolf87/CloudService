@@ -74,12 +74,12 @@ namespace CloudServise
                         ValidateIssuerSigningKey = true,
                     };
                 });
-
-            //  services.AddSwaggerGen();
-
+            
             services.AddCors(o => o.AddPolicy("AllowAll", builder => builder.AllowAnyOrigin().AllowAnyHeader()));
 
             services.AddControllers();
+
+            services.AddSwaggerGen();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -106,8 +106,11 @@ namespace CloudServise
             });
 
 
-            //app.UseSwagger();
-            //app.UseSwaggerUI();
+            app.UseSwagger();
+            app.UseSwaggerUI(c =>
+            {
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "CloudService API");
+            });
         }
 
 
