@@ -65,9 +65,9 @@ namespace CloudService_API.Controllers
                 return BadRequest();
             }
 
-            _context.Entry(role).State = EntityState.Modified;
 
             var find = await _context.Roles.FindAsync(role.Id);
+            _context.Entry(find).State = EntityState.Modified;
             find.Name = role.Name;
             try
             {

@@ -37,7 +37,7 @@ namespace CloudService_API.Models
         public Guid Id;
         public string Name;
 
-        public GroupDTO() {}
+        public GroupDTO() { }
         public GroupDTO(Guid id, string name)
         {
             Id = id;

@@ -64,8 +64,8 @@ namespace CloudService_API.Controllers
                 return BadRequest();
             }
 
-            _context.Entry(laboratoryWorkDto).State = EntityState.Modified;
             var find = await _context.LaboratoryWorks.FindAsync(id);
+            _context.Entry(find).State = EntityState.Modified;
             find.Name = laboratoryWorkDto.Name;
             find.DisciplineId = laboratoryWorkDto.DisciplineId;
             find.OwnerId = laboratoryWorkDto.OwnerId;

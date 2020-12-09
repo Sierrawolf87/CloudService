@@ -31,13 +31,13 @@ namespace CloudService_API.Controllers
         public async Task<ActionResult<IEnumerable<GroupDTO>>> GetGroups()
         {
             var find = await _context.Groups.ToListAsync();
-            List<GroupDTO> userDtos =new List<GroupDTO>();
+            List<GroupDTO> groupDtos = new List<GroupDTO>();
             foreach (var item in find)
             {
-                userDtos.Add(item.ToGroupDto());
+                groupDtos.Add(item.ToGroupDto());
             }
 
-            return userDtos;
+            return Ok(groupDtos);
         }
 
         // GET: api/Groups/5

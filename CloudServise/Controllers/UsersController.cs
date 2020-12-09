@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Claims;
@@ -72,7 +73,7 @@ namespace CloudService_API.Controllers
             }
             
             var find = await _context.Users.FindAsync(id);
-            _context.Entry(user).State = EntityState.Modified;
+            _context.Entry(find).State = EntityState.Modified;
 
             try
             {
@@ -104,13 +105,18 @@ namespace CloudService_API.Controllers
         [HttpPost("auth/SignUp")]
         public async Task<ActionResult<UserDTO>> SignUp(UserRegisterDTO user)
         {
-            var role = await _context.Roles.FindAsync(user.Role.Id);
+            var find = await _context.Users.Where(c => c.ReportCard == user.ReportCard).FirstOrDefaultAsync();
+            if (find != null)
+            {
+                return BadRequest("A user with this reportcard already exists");
+            }
+            var role = await _context.Roles.FindAsync(user.RoleId);
             if (role == null)
             {
                 return BadRequest("Invalid role Id");
             }
 
-            var group = await _context.Groups.FindAsync(user.Group.Id);
+            var group = await _context.Groups.FindAsync(user.GroupId);
             if (group == null)
             {
                 return BadRequest("Invalid group Id");

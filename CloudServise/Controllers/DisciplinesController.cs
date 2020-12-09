@@ -66,7 +66,7 @@ namespace CloudService_API.Controllers
             }
 
             var find = await _context.Disciplines.FindAsync(id);
-            _context.Entry(discipline).State = EntityState.Modified;
+            _context.Entry(find).State = EntityState.Modified;
             find.Name = discipline.Name;
             find.OwnerId = discipline.OwnerId;
             find.ShortName = discipline.ShortName;

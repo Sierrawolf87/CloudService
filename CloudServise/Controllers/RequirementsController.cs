@@ -30,7 +30,7 @@ namespace CloudService_API.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<RequirementDTO>>> GetRequirements()
         {
-            var find = await _context.Requirements.ToListAsync();
+            var find = await _context.Requirements.Include(c => c.Files).ToListAsync();
             List<RequirementDTO> dtos = new List<RequirementDTO>();
             foreach (var item in find)
             {
@@ -45,7 +45,7 @@ namespace CloudService_API.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<RequirementDTO>> GetRequirement(Guid id)
         {
-            var requirement = await _context.Requirements.FindAsync(id);
+            var requirement = await _context.Requirements.Include(c => c.Files).FirstOrDefaultAsync(f => f.Id == id);
 
             if (requirement == null)
             {

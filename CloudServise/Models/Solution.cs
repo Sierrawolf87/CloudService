@@ -66,6 +66,7 @@ namespace CloudService_API.Models
             LaboratoryWorkId = laboratoryWorkId;
             if (files != null)
             {
+                Files = new List<FileDTO>();
                 foreach (var item in files)
                 {
                     Files.Add(item.ToFileDto());

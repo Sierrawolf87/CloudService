@@ -31,7 +31,7 @@ namespace CloudService_API.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<SolutionDTO>>> GetSolutions()
         {
-            var find = await _context.Solutions.ToListAsync();
+            var find = await _context.Solutions.Include(c => c.Files).ToListAsync();
             List<SolutionDTO> dtos = new List<SolutionDTO>();
             foreach (var item in find)
             {
@@ -46,7 +46,7 @@ namespace CloudService_API.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<SolutionDTO>> GetSolution(Guid id)
         {
-            var solution = await _context.Solutions.FindAsync(id);
+            var solution = await _context.Solutions.Include(c => c.Files).FirstOrDefaultAsync(f => f.Id == id);
 
             if (solution == null)
             {
@@ -81,8 +81,8 @@ namespace CloudService_API.Controllers
                 return BadRequest();
             }
 
-            _context.Entry(solution).State = EntityState.Modified;
             var find = await _context.Solutions.FindAsync(id);
+            _context.Entry(find).State = EntityState.Modified;
             find.Description = solution.Description;
             find.LaboratoryWorkId = solution.LaboratoryWorkId;
             find.Mark = solution.Mark;
