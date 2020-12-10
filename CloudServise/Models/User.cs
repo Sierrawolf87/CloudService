@@ -99,4 +99,24 @@ namespace CloudService_API.Models
 
         public Guid GroupId { get; set; }
     }
+
+    public class ForgotPassword
+    {
+        public Guid Id { get; set; }
+        public DateTime DateTime { get; set; }
+
+        public ForgotPassword() {}
+        public ForgotPassword(Guid id, DateTime dateTime)
+        {
+            Id = id;
+            DateTime = dateTime;
+        }
+    }
+
+    public class ResetPassword
+    {
+        public string NewPassword { get; set; }
+        [Compare("NewPassword", ErrorMessage = "Пароли не совпадают")]
+        public string ConfimPassword { get; set; }
+    }
 }

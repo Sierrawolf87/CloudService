@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.IdentityModel.Tokens.Jwt;
+using System.IO;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
@@ -9,6 +10,7 @@ using CloudService_API.Data;
 using CloudService_API.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cors;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -137,14 +139,6 @@ namespace CloudService_API.Controllers
             }
         }
 
-        // Для теста отправки сообщений клиенту
-        [HttpGet("SendEmail/{email}/{subject}/{message}")]
-        public async Task<string> SendEmail(string email, string subject, string message)
-        {
-            await Auxiliary.SendEmailAsync(email, subject, message, _mailSettings);
-            return "Отправлено";
-        }
-
         //POST: api/users/auth/signin
         [HttpPost("auth/SignIn")]
         public async Task<IActionResult> Signin([FromForm] string username, [FromForm] string password)
@@ -173,6 +167,52 @@ namespace CloudService_API.Controllers
             };
 
             return Ok(response);
+        }
+
+        //POST: api/users/auth/ForgotPassword
+        [HttpPost("auth/ForgotPassword")]
+        public async Task<IActionResult> ForgotPassword([FromForm] string username)
+        {
+            var find = await _context.Users.Where(c => c.UserName == username).FirstOrDefaultAsync();
+            if (find == null)
+            {
+                return NotFound();
+            }
+            if (string.IsNullOrEmpty(find.Email))
+            {
+                return BadRequest(new { errorText = "У вас нет электронной почты. Обратитесь к администратору." });
+            }
+            ForgotPassword forgotPassword = new ForgotPassword(find.Id, DateTime.Now.AddHours(2));
+            var code = Convert.ToBase64String(SerializeForgotPassword(forgotPassword));
+
+            await Auxiliary.SendEmailAsync(find.Email, "Восстановление пароля", $"Для восстановления перейдите по ссылке <br> https://localhost:5001/api/users/auth/ResetPassword/{code}", _mailSettings);
+
+            return Ok();
+        }
+
+        //POST: api/users/auth/ResetPassword
+        [HttpPost("auth/ResetPassword/{code}")]
+        public async Task<IActionResult> ResetPassword(string code, [FromBody] ResetPassword resetPassword)
+        {
+            ForgotPassword forgotPassword = new ForgotPassword();
+            try
+            {
+                forgotPassword = DesserializeForgotPassword(Convert.FromBase64String(code));
+            }
+            catch
+            {
+                return BadRequest(new { errorMessage = "Неверная ссылка."});
+            }
+
+            if (forgotPassword.DateTime <= DateTime.Now)
+            {
+                return BadRequest(new { errorMessage = "Время жизни ссылки истекло. Повторите запрос сброса пароля." });
+            }
+
+            var find = await _context.Users.FindAsync(forgotPassword.Id);
+            find.Password = Auxiliary.GenerateHashPassword(resetPassword.NewPassword, _passwordHashSettings.HashKey);
+
+            return Ok();
         }
 
         // DELETE: api/Users/5
@@ -225,6 +265,33 @@ namespace CloudService_API.Controllers
         private bool UserExists(Guid id)
         {
             return _context.Users.Any(e => e.Id == id);
+        }
+
+        private byte[] SerializeForgotPassword(ForgotPassword forgotPassword)
+        {
+            using (MemoryStream m = new MemoryStream())
+            {
+                using (BinaryWriter writer = new BinaryWriter(m))
+                {
+                    writer.Write(forgotPassword.Id.ToString());
+                    writer.Write(Convert.ToString(forgotPassword.DateTime));
+                }
+                return m.ToArray();
+            }
+        }
+
+        private ForgotPassword DesserializeForgotPassword(byte[] data)
+        {
+            ForgotPassword result = new ForgotPassword();
+            using (MemoryStream m = new MemoryStream(data))
+            {
+                using (BinaryReader reader = new BinaryReader(m))
+                {
+                    result.Id = new Guid(reader.ReadString());
+                    result.DateTime = Convert.ToDateTime(reader.ReadString());
+                }
+            }
+            return result;
         }
     }
 }
