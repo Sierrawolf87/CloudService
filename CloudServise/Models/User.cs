@@ -119,4 +119,10 @@ namespace CloudService_API.Models
         [Compare("NewPassword", ErrorMessage = "Пароли не совпадают")]
         public string ConfimPassword { get; set; }
     }
+
+    public class ChangeEmail
+    {
+        [EmailAddress(ErrorMessage = "Неверная запись почты")]
+        public string NewEmail { get; set; }
+    }
 }

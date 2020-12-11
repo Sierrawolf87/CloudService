@@ -110,7 +110,7 @@ namespace CloudService_API.Controllers
             var find = await _context.Users.Where(c => c.ReportCard == user.ReportCard).FirstOrDefaultAsync();
             if (find != null)
             {
-                return BadRequest("A user with this reportcard already exists");
+                return BadRequest("Пользователь с таким номером студенческого уже существует");
             }
             var role = await _context.Roles.FindAsync(user.RoleId);
             if (role == null)
@@ -146,7 +146,7 @@ namespace CloudService_API.Controllers
             var identity = await GetIdentity(username, password);
             if (identity == null)
             {
-                return BadRequest(new { errorText = "Invalid username or password." });
+                return BadRequest(new { errorText = "Неверное имя пользователя или пароль" });
             }
 
             var now = DateTime.UtcNow;
@@ -162,12 +162,26 @@ namespace CloudService_API.Controllers
 
             var response = new
             {
-                access_token = encodedJwt,
+                token = encodedJwt,
                 user_id = identity.Name
             };
 
             return Ok(response);
         }
+
+
+        //POST: api/users/current/ChangeEmail
+        [Authorize]
+        [HttpPost("current/ChangeEmail")]
+        public async Task<IActionResult> ChangeEmail([FromBody] ChangeEmail changeEmail)
+        {
+            var find = await _context.Users.FindAsync(new Guid(User.Identity.Name));
+            find.Email = changeEmail.NewEmail;
+            await _context.SaveChangesAsync();
+
+            return Ok();
+        }
+        
 
         //POST: api/users/auth/ForgotPassword
         [HttpPost("auth/ForgotPassword")]
@@ -185,7 +199,7 @@ namespace CloudService_API.Controllers
             ForgotPassword forgotPassword = new ForgotPassword(find.Id, DateTime.Now.AddHours(2));
             var code = Convert.ToBase64String(SerializeForgotPassword(forgotPassword));
 
-            await Auxiliary.SendEmailAsync(find.Email, "Восстановление пароля", $"Для восстановления перейдите по ссылке <br> https://localhost:5001/api/users/auth/ResetPassword/{code}", _mailSettings);
+            await Auxiliary.SendEmailAsync(find.Email, "Восстановление пароля", $"Для восстановления пароля перейдите по ссылке <br> https://localhost:5001/api/users/auth/ResetPassword/{code}", _mailSettings);
 
             return Ok();
         }
@@ -211,7 +225,8 @@ namespace CloudService_API.Controllers
 
             var find = await _context.Users.FindAsync(forgotPassword.Id);
             find.Password = Auxiliary.GenerateHashPassword(resetPassword.NewPassword, _passwordHashSettings.HashKey);
-
+            await _context.SaveChangesAsync();
+            
             return Ok();
         }
 
@@ -240,7 +255,6 @@ namespace CloudService_API.Controllers
         }
         
         
-
         private async Task<ClaimsIdentity> GetIdentity(string username, string password)
         {
             var task = await Task.Run(async () =>
