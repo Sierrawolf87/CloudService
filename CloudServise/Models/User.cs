@@ -116,7 +116,13 @@ namespace CloudService_API.Models
     public class ResetPassword
     {
         public string NewPassword { get; set; }
-        [Compare("NewPassword", ErrorMessage = "Пароли не совпадают")]
+        public string ConfimPassword { get; set; }
+    }
+
+    public class ResetPasswordSelf
+    {
+        public string OldPassword { get; set; }
+        public string NewPassword { get; set; }
         public string ConfimPassword { get; set; }
     }
 

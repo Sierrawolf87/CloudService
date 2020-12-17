@@ -21,6 +21,7 @@ namespace CloudService_API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [EnableCors("AllowAll")]
     public class UsersController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
@@ -73,7 +74,7 @@ namespace CloudService_API.Controllers
             {
                 return BadRequest();
             }
-            
+
             var find = await _context.Users.FindAsync(id);
             _context.Entry(find).State = EntityState.Modified;
 
@@ -143,10 +144,14 @@ namespace CloudService_API.Controllers
         [HttpPost("auth/SignIn")]
         public async Task<IActionResult> Signin([FromForm] string username, [FromForm] string password)
         {
+            if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
+            {
+                return BadRequest("Введите логин и пароль");
+            }
             var identity = await GetIdentity(username, password);
             if (identity == null)
             {
-                return BadRequest(new { errorText = "Неверное имя пользователя или пароль" });
+                return NotFound("Неверный логин или пароль");
             }
 
             var now = DateTime.UtcNow;
@@ -170,6 +175,20 @@ namespace CloudService_API.Controllers
         }
 
 
+        //GET: api/users/auth/GetUserRole
+        [Authorize]
+        [HttpGet("auth/GetUserRole")]
+        public async Task<IActionResult> GetUserRole()
+        {
+            var find = await _context.Users.Include(c => c.Role).FirstOrDefaultAsync(c => c.Id == new Guid(User.Identity.Name));
+            var role = find.Role.Name;
+            if (role == null)
+                return NotFound();
+            else
+                return Ok(role);
+        }
+
+
         //POST: api/users/current/ChangeEmail
         [Authorize]
         [HttpPost("current/ChangeEmail")]
@@ -190,24 +209,26 @@ namespace CloudService_API.Controllers
             var find = await _context.Users.Where(c => c.UserName == username).FirstOrDefaultAsync();
             if (find == null)
             {
-                return NotFound();
+                return NotFound("Пользователь не найден");
             }
             if (string.IsNullOrEmpty(find.Email))
             {
-                return BadRequest(new { errorText = "У вас нет электронной почты. Обратитесь к администратору." });
+                return BadRequest("У вас нет электронной почты. Обратитесь к администратору");
             }
             ForgotPassword forgotPassword = new ForgotPassword(find.Id, DateTime.Now.AddHours(2));
             var code = Convert.ToBase64String(SerializeForgotPassword(forgotPassword));
 
-            await Auxiliary.SendEmailAsync(find.Email, "Восстановление пароля", $"Для восстановления пароля перейдите по ссылке <br> https://localhost:5001/api/users/auth/ResetPassword/{code}", _mailSettings);
+            await Auxiliary.SendEmailAsync(find.Email, "Восстановление пароля", $"Для восстановления пароля перейдите по ссылке <br> http://localhost:3000/auth/ResetPassword/{code}", _mailSettings);
 
-            return Ok();
+            return Ok("На вашу почту отправлено письмо с инструкцией");
         }
 
         //POST: api/users/auth/ResetPassword
         [HttpPost("auth/ResetPassword/{code}")]
-        public async Task<IActionResult> ResetPassword(string code, [FromBody] ResetPassword resetPassword)
+        public async Task<IActionResult> ResetPassword(string code, [FromForm] ResetPassword resetPassword)
         {
+            if (resetPassword.NewPassword != resetPassword.ConfimPassword)
+                return BadRequest("Пароли не совпадают");
             ForgotPassword forgotPassword = new ForgotPassword();
             try
             {
@@ -215,21 +236,44 @@ namespace CloudService_API.Controllers
             }
             catch
             {
-                return BadRequest(new { errorMessage = "Неверная ссылка."});
+                return BadRequest("Неверная ссылка");
             }
 
             if (forgotPassword.DateTime <= DateTime.Now)
             {
-                return BadRequest(new { errorMessage = "Время жизни ссылки истекло. Повторите запрос сброса пароля." });
+                return BadRequest("Время жизни ссылки истекло. Повторите запрос сброса пароля");
             }
 
             var find = await _context.Users.FindAsync(forgotPassword.Id);
             find.Password = Auxiliary.GenerateHashPassword(resetPassword.NewPassword, _passwordHashSettings.HashKey);
             await _context.SaveChangesAsync();
             
-            return Ok();
+            return Ok("Пароль успешно изменён. Можете перейти ко входу");
         }
 
+        //POST: api/users/auth/ResetPasswordSelf
+        [Authorize]
+        [HttpPost("auth/ResetPasswordSelf")]
+        public async Task<IActionResult> ResetPasswordSelf([FromBody] ResetPasswordSelf resetPassword)
+        {
+            if (resetPassword.NewPassword != resetPassword.ConfimPassword)
+                return BadRequest("Пароли не совпадают");
+            var find = await _context.Users.FindAsync(new Guid(User.Identity.Name));
+            if (Auxiliary.GenerateHashPassword(resetPassword.OldPassword, _passwordHashSettings.HashKey) != find.Password)
+            {
+                return BadRequest("Неверный старый пароль");
+            }
+
+            find.Password = Auxiliary.GenerateHashPassword(resetPassword.NewPassword, _passwordHashSettings.HashKey);
+
+            if (!string.IsNullOrEmpty(find.Email))
+            {
+                await Auxiliary.SendEmailAsync(find.Email, "Сброс пароля", "Вы изменили пароль в личном кабинете. Если это были не вы - выполните сброс пароля по почте", _mailSettings);
+            }
+             
+            return Ok();
+        }
+         
         // DELETE: api/Users/5
         [Authorize(Roles = "root, admin, network_editor")]
         [HttpDelete("{id}")]

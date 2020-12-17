@@ -58,6 +58,7 @@ namespace CloudServise
                 x.MemoryBufferThreshold = int.MaxValue;
             });
 
+            services.AddCors(o => o.AddPolicy("AllowAll", builder => builder.AllowAnyOrigin().AllowAnyHeader()));
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(options =>
                 {
@@ -76,7 +77,6 @@ namespace CloudServise
                     };
                 });
 
-            services.AddCors(o => o.AddPolicy("AllowAll", builder => builder.AllowAnyOrigin().AllowAnyHeader()));
 
             services.AddControllers();
 
@@ -118,10 +118,10 @@ namespace CloudServise
 
             app.UseRouting();
 
+            app.UseCors("AllowAll");
             app.UseAuthentication();
             app.UseAuthorization();
 
-            app.UseCors("AllowAll");
 
             app.UseEndpoints(endpoints =>
             {

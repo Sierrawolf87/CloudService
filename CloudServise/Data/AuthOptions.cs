@@ -12,7 +12,7 @@ namespace CloudService_API.Data
         public const string ISSUER = "CloudService"; // издатель токена
         public const string AUDIENCE = "CloudServiceClient"; // потребитель токена
         const string KEY = "CloudServiceTokenKey";   // ключ для шифрации
-        public const int LIFETIME = 60; // время жизни токена - 60 минут
+        public const int LIFETIME = 60*2; // время жизни токена в минутах
         public static SymmetricSecurityKey GetSymmetricSecurityKey()
         {
             return new SymmetricSecurityKey(Encoding.ASCII.GetBytes(KEY));
