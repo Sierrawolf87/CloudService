@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
@@ -8,40 +9,31 @@ namespace CloudService_API.Data
 {
     public class RequestParameters 
     {
-        int _PageNumber = 1;
-        int _PageSize = 150;
-        int _count = 1;
-
         public int PageCount {
-            get => (int)Math.Ceiling(_count / (double)_PageSize);
-            set => _count = value;
+            get => (int)Math.Ceiling(TotalCount / (double)PageSize);
         }
 
-        public int PageNumber
-        {
-            get => _PageNumber;
-            set
-            {
-                if (value < 1)
-                    _PageNumber = 1;
-                if (value > PageCount)
-                    _PageNumber = PageCount;
-            }
-        }
+        public int TotalCount { get; set; }
 
-        public int PageSize {
-            get => _PageSize;
-            set
-            {
-                if (value < 1)
-                    _PageSize = 1;
-                if (value > 150)
-                    _PageSize = 150;
-            }
-        }
+        public int PageNumber { get; set; }
+        public int PageSize { get; set; }
 
         public int Skip => (PageNumber - 1) * PageSize;
         public int Take => PageSize;
+
+        public virtual string ToJson() => JsonConvert.SerializeObject(this);
+
+        public void Check()
+        {
+            if (PageNumber < 1)
+                PageNumber = 1;
+
+            if (PageSize < 1)
+                PageSize = 1;
+
+            if (PageNumber > PageCount)
+                PageNumber = PageCount;
+        }
     }
 
 

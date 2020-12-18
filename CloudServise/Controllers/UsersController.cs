@@ -51,6 +51,23 @@ namespace CloudService_API.Controllers
             return userDtos;
         }
 
+        // GET: api/Users/GetUsersWithPage
+        [Authorize(Roles = "root, admin, network_editor")]
+        [HttpGet("WithPage")]
+        public async Task<ActionResult<IEnumerable<UserDTO>>> GetUsersWithPage([FromQuery] RequestParameters requestParameters)
+        {
+            requestParameters.TotalCount = await _context.Users.CountAsync();
+            requestParameters.Check();
+            Response.Headers.Add("X-Pagination", requestParameters.ToJson());
+            List<UserDTO> userDtos = new List<UserDTO>();
+            var actionResult = await _context.Users.Include(c => c.Role).Skip(requestParameters.Skip).Take(requestParameters.Take).ToListAsync();
+            foreach (var user in actionResult)
+            {
+                userDtos.Add(user.ToUserDto());
+            }
+            return userDtos;
+        }
+
         // GET: api/Users/5
         [Authorize(Roles = "root, admin, network_editor")]
         [HttpGet("{id}")]

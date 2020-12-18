@@ -64,8 +64,8 @@ namespace CloudService_API.Models
             userDto.Surname = Surname;
             userDto.Patronymic = Patronymic;
             userDto.ReportCard = ReportCard;
-            userDto.RoleId = Role?.Id;
-            userDto.GroupId = Group?.Id;
+            userDto.Role = Role?.ToRoleDTO();
+            userDto.Group = Group?.ToGroupDto();
             return userDto;
         }
 
@@ -83,8 +83,8 @@ namespace CloudService_API.Models
         public string Initials => !string.IsNullOrEmpty(Patronymic) ? $"{Surname} {Name[0]}. {Patronymic[0]}." : $"{Surname} {Name[0]}";
         public string ReportCard { get; set; }
 
-        public Guid? RoleId { get; set; }
-        public Guid? GroupId { get; set; }
+        public RoleDTO Role { get; set; }
+        public GroupDTO Group { get; set; }
 
     }
 
