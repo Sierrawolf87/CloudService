@@ -43,7 +43,7 @@ namespace CloudService_API.Controllers
         public async Task<ActionResult<IEnumerable<UserDTO>>> GetUsers()
         {
             List<UserDTO> userDtos = new List<UserDTO>();
-            var actionResult = await _context.Users.Include(c => c.Role).ToListAsync();
+            var actionResult = await _context.Users.Include(c => c.Role).Include(c => c.Group).ToListAsync();
             foreach (var user in actionResult)
             {
                 userDtos.Add(user.ToUserDto());
@@ -51,13 +51,42 @@ namespace CloudService_API.Controllers
             return userDtos;
         }
 
-        // GET: api/Users/GetUsersWithPage
+        [Authorize(Roles = "root, network_editor")]
+        [HttpGet("search")]
+        public async Task<ActionResult<IEnumerable<UserDTO>>> SearchUsers([FromQuery] string text, [FromQuery] string role, [FromQuery] string group)
+        {
+            List<UserDTO> userDtos = new List<UserDTO>();
+            var actionResult = await _context.Users.Include(c => c.Role).Include(c => c.Group)
+                .Where(u => 
+               (EF.Functions.Like(u.Id.ToString(), $"%{text}%") ||
+                EF.Functions.Like(u.UserName , $"%{text}%") ||
+                EF.Functions.Like(u.Name , $"%{text}%") ||
+                EF.Functions.Like(u.Surname , $"%{text}%") ||
+                EF.Functions.Like(u.Patronymic, $"%{text}%") ||
+                EF.Functions.Like(u.ReportCard , $"%{text}%") ||
+                EF.Functions.Like(u.Email, $"%{text}%") ||
+                EF.Functions.Like(u.Group.Name, $"%{text}%")
+               ) &&
+               EF.Functions.Like(u.Role.Id.ToString(), $"%{role}%") &&
+               EF.Functions.Like(u.Group.Id.ToString(), $"%{group}%")
+               )
+               .ToListAsync();
+
+            foreach (var user in actionResult)
+            {
+                userDtos.Add(user.ToUserDto());
+            }
+            return userDtos;
+        }
+
+        // GET: api/Users/WithPage
         [Authorize(Roles = "root, admin, network_editor")]
         [HttpGet("WithPage")]
-        public async Task<ActionResult<IEnumerable<UserDTO>>> GetUsersWithPage([FromQuery] RequestParameters requestParameters)
+        public async Task<IActionResult> GetUsersWithPage([FromQuery] RequestParameters requestParameters)
         {
             requestParameters.TotalCount = await _context.Users.CountAsync();
-            requestParameters.Check();
+            if (!requestParameters.Check())
+                return NoContent();
             Response.Headers.Add("X-Pagination", requestParameters.ToJson());
             List<UserDTO> userDtos = new List<UserDTO>();
             var actionResult = await _context.Users.Include(c => c.Role).Skip(requestParameters.Skip).Take(requestParameters.Take).ToListAsync();
@@ -65,21 +94,21 @@ namespace CloudService_API.Controllers
             {
                 userDtos.Add(user.ToUserDto());
             }
-            return userDtos;
+            return Ok(userDtos);
         }
 
         // GET: api/Users/5
         [Authorize(Roles = "root, admin, network_editor")]
         [HttpGet("{id}")]
-        public async Task<ActionResult<UserDTO>> GetUser(Guid id)
+        public async Task<IActionResult> GetUser(Guid id)
         {
-            var user = await _context.Users.Include(c => c.Role).FirstOrDefaultAsync(i => i.Id == id);
+            var user = await _context.Users.Include(c => c.Role).Include(c => c.Group).FirstOrDefaultAsync(i => i.Id == id);
             if (user == null)
             {
                 return NotFound();
             }
 
-            return user.ToUserDto();
+            return Ok(user.ToUserDto());
         }
 
         // PUT: api/Users/5
@@ -128,7 +157,7 @@ namespace CloudService_API.Controllers
             var find = await _context.Users.Where(c => c.ReportCard == user.ReportCard).FirstOrDefaultAsync();
             if (find != null)
             {
-                return BadRequest("Пользователь с таким номером студенческого уже существует");
+                return BadRequest("Пользователь с таким учётным номером уже существует");
             }
             var role = await _context.Roles.FindAsync(user.RoleId);
             if (role == null)
@@ -212,6 +241,11 @@ namespace CloudService_API.Controllers
         public async Task<IActionResult> ChangeEmail([FromBody] ChangeEmail changeEmail)
         {
             var find = await _context.Users.FindAsync(new Guid(User.Identity.Name));
+            var findEmail = await _context.Users.FirstOrDefaultAsync(c => c.Email == changeEmail.NewEmail);
+            if (findEmail != null)
+            {
+                return BadRequest("Пользователь с такой почтой уже зарегестрирован");
+            }
             find.Email = changeEmail.NewEmail;
             await _context.SaveChangesAsync();
 

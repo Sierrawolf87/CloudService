@@ -210,7 +210,11 @@ namespace CloudService_API.Controllers
             return NoContent();
         }
 
-        // POST: api/Files
+        // Для загрузки фалов нужно отправить файлы в form-data
+        // обязательно на HTTPS, иначе возникает ошибка максимального
+        // размера body.
+
+        // POST: api/Files/PostSolutionFiles/{solutionId}
         // Загрузка решений студента
         [Authorize]
         [HttpPost("PostSolutionFiles/{solutionId}")]
@@ -236,6 +240,7 @@ namespace CloudService_API.Controllers
             return Created("", uploadedList);
         }
 
+        //POST: api/Files/PostRequirementFiles/{solutionId}
         // Загрузка решений студента
         [Authorize]
         [HttpPost("PostRequirementFiles/{requirementId}")]

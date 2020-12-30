@@ -58,7 +58,7 @@ namespace CloudServise
                 x.MemoryBufferThreshold = int.MaxValue;
             });
 
-            services.AddCors(o => o.AddPolicy("AllowAll", builder => builder.AllowAnyOrigin().AllowAnyHeader()));
+            services.AddCors(o => o.AddPolicy("AllowAll", builder => builder.AllowAnyOrigin().AllowAnyHeader().WithExposedHeaders("X-Pagination")));
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(options =>
                 {
@@ -77,8 +77,14 @@ namespace CloudServise
                     };
                 });
 
+            services.AddResponseCaching();
 
-            services.AddControllers();
+            services.AddControllers(config => {
+                config.CacheProfiles.Add("120SecondsDuration", new CacheProfile
+                {
+                    Duration = 120
+                });
+            });
 
             services.AddSwaggerGen(options => { 
                 options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
@@ -115,6 +121,8 @@ namespace CloudServise
             }
 
             app.UseHttpsRedirection();
+
+            app.UseResponseCaching();
 
             app.UseRouting();
 

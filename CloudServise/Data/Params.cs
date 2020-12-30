@@ -7,37 +7,78 @@ using System.Threading.Tasks;
 
 namespace CloudService_API.Data
 {
-    public class RequestParameters 
+    public class RequestParameters
     {
-        public int PageCount {
-            get => (int)Math.Ceiling(TotalCount / (double)PageSize);
+        public int PageCount
+        {
+            get => (int)Math.Ceiling(TotalCount / (double)Size);
         }
 
         public int TotalCount { get; set; }
 
-        public int PageNumber { get; set; }
-        public int PageSize { get; set; }
+        public int? Page { get; set; }
+        public int Size { get; set; }
 
-        public int Skip => (PageNumber - 1) * PageSize;
-        public int Take => PageSize;
+        public int Skip { get; set; }
+        public int Take { get; set; }
+
+        public int? Next
+        {
+            get
+            {
+                if (Page != null)
+                {
+                    int next = (int)(Page + 1);
+                    if (next <= PageCount)
+                    {
+                        return next;
+                    }
+                }
+                return null;
+            }
+        }
+
+        public int? Prev
+        {
+            get
+            {
+                if (Page != null)
+                {
+                    int prev = (int)(Page - 1);
+                    if (prev > 0)
+                    {
+                        return prev;
+                    }
+                }
+                return null;
+            }
+        }
 
         public virtual string ToJson() => JsonConvert.SerializeObject(this);
 
-        public void Check()
+        public bool Check()
         {
-            if (PageNumber < 1)
-                PageNumber = 1;
+            if (Page == null)
+                return false;
 
-            if (PageSize < 1)
-                PageSize = 1;
+            if (Page < 1)
+                Page = 1;
 
-            if (PageNumber > PageCount)
-                PageNumber = PageCount;
+            if (Size < 1)
+                Size = 20;
+
+            if (Page > PageCount)
+                Page = PageCount;
+
+            Skip = (int)((Page - 1) * Size);
+            Take = Size;
+
+            return true;
         }
     }
 
 
-    public class UsersParameters: RequestParameters
+    public class UsersParameters : RequestParameters
     {
         public string Email { get; set; }
         public string UserName { get; set; }
