@@ -51,45 +51,32 @@ namespace CloudService_API.Controllers
             return userDtos;
         }
 
-        [Authorize(Roles = "root, network_editor")]
-        [HttpGet("search")]
-        public async Task<ActionResult<IEnumerable<UserDTO>>> SearchUsers([FromQuery] string text, [FromQuery] string role, [FromQuery] string group)
-        {
-            List<UserDTO> userDtos = new List<UserDTO>();
-            var actionResult = await _context.Users.Include(c => c.Role).Include(c => c.Group)
-                .Where(u => 
-               (EF.Functions.Like(u.Id.ToString(), $"%{text}%") ||
-                EF.Functions.Like(u.UserName , $"%{text}%") ||
-                EF.Functions.Like(u.Name , $"%{text}%") ||
-                EF.Functions.Like(u.Surname , $"%{text}%") ||
-                EF.Functions.Like(u.Patronymic, $"%{text}%") ||
-                EF.Functions.Like(u.ReportCard , $"%{text}%") ||
-                EF.Functions.Like(u.Email, $"%{text}%") ||
-                EF.Functions.Like(u.Group.Name, $"%{text}%")
-               ) &&
-               EF.Functions.Like(u.Role.Id.ToString(), $"%{role}%") &&
-               EF.Functions.Like(u.Group.Id.ToString(), $"%{group}%")
-               )
-               .ToListAsync();
-
-            foreach (var user in actionResult)
-            {
-                userDtos.Add(user.ToUserDto());
-            }
-            return userDtos;
-        }
-
         // GET: api/Users/WithPage
         [Authorize(Roles = "root, admin, network_editor")]
         [HttpGet("WithPage")]
-        public async Task<IActionResult> GetUsersWithPage([FromQuery] RequestParameters requestParameters)
+        public async Task<IActionResult> GetUsersWithPage([FromQuery] UsersParameters usersParameters)
         {
-            requestParameters.TotalCount = await _context.Users.CountAsync();
-            if (!requestParameters.Check())
+            var actionResult = await _context.Users.Include(c => c.Role).Include(c => c.Group)
+               .Where(u =>
+              (EF.Functions.Like(u.Id.ToString(), $"%{usersParameters.Text}%") ||
+               EF.Functions.Like(u.UserName, $"%{usersParameters.Text}%") ||
+               EF.Functions.Like(u.Name, $"%{usersParameters.Text}%") ||
+               EF.Functions.Like(u.Surname, $"%{usersParameters.Text}%") ||
+               EF.Functions.Like(u.Patronymic, $"%{usersParameters.Text}%") ||
+               EF.Functions.Like(u.ReportCard, $"%{usersParameters.Text}%") ||
+               EF.Functions.Like(u.Email, $"%{usersParameters.Text}%") ||
+               EF.Functions.Like(u.Group.Name, $"%{usersParameters.Text}%")
+              ) &&
+              EF.Functions.Like(u.Role.Id.ToString(), $"%{usersParameters.Role}%") &&
+              EF.Functions.Like(u.Group.Id.ToString(), $"%{usersParameters.Group}%")
+              )
+              .ToListAsync();
+            usersParameters.TotalCount = actionResult.Count;
+            if (!usersParameters.Check())
                 return NoContent();
-            Response.Headers.Add("X-Pagination", requestParameters.ToJson());
+            Response.Headers.Add("X-Pagination", usersParameters.PaginationToJson());
             List<UserDTO> userDtos = new List<UserDTO>();
-            var actionResult = await _context.Users.Include(c => c.Role).Skip(requestParameters.Skip).Take(requestParameters.Take).ToListAsync();
+            actionResult = actionResult.Skip(usersParameters.Skip).Take(usersParameters.Take).ToList();
             foreach (var user in actionResult)
             {
                 userDtos.Add(user.ToUserDto());

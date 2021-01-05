@@ -40,6 +40,29 @@ namespace CloudService_API.Controllers
             return Ok(groupDtos);
         }
 
+        //GET: api/Groups/WithPage
+        [Authorize(Roles = "root, admin, network_editor")]
+        [HttpGet("WithPage")]
+        public async Task<IActionResult> GetGroupsWithPage([FromQuery] GroupParameters groupParameters)
+        {
+            var find = await _context.Groups
+                .Where(s =>
+                EF.Functions.Like(s.Id.ToString(), $"%{groupParameters.Text}%") ||
+                EF.Functions.Like(s.Name, $"%{groupParameters.Text}%") 
+              ).ToListAsync();
+
+            groupParameters.TotalCount = find.Count;
+            if (!groupParameters.Check())
+                return NoContent();
+            Response.Headers.Add("X-Pagination", groupParameters.PaginationToJson());
+            List<GroupDTO> dtos = new List<GroupDTO>();
+            foreach (var item in find)
+            {
+                dtos.Add(item.ToGroupDto());
+            }
+            return Ok(dtos);
+        }
+
         // GET: api/Groups/5
         [Authorize(Roles = "root, admin, network_editor")]
         [HttpGet("{id}")]

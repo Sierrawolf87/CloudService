@@ -39,6 +39,32 @@ namespace CloudService_API.Controllers
             return dtos;
         }
 
+        //GET: api/Disciplines/LaboratoryWorks/WithPage
+        [Authorize(Roles = "root, admin, network_editor, teacher")]
+        [HttpGet("WithPage")]
+        public async Task<IActionResult> GetLaboratoryWorksWithPage([FromQuery] LaboratoryWorkParameters laboratoryWorkParameters)
+        {
+            var find = await _context.LaboratoryWorks
+                .Where(s =>
+               (EF.Functions.Like(s.Id.ToString(), $"%{laboratoryWorkParameters.Text}%") ||
+                EF.Functions.Like(s.Name, $"%{laboratoryWorkParameters.Text}%")
+               ) &&
+                EF.Functions.Like(s.DisciplineId.ToString(), $"%{laboratoryWorkParameters.DisciplineId}%") &&
+                EF.Functions.Like(s.OwnerId.ToString(), $"%{laboratoryWorkParameters.OwnerId}%")
+              ).ToListAsync();
+
+            laboratoryWorkParameters.TotalCount = find.Count;
+            if (!laboratoryWorkParameters.Check())
+                return NoContent();
+            Response.Headers.Add("X-Pagination", laboratoryWorkParameters.PaginationToJson());
+            List<LaboratoryWorkDTO> dtos = new List<LaboratoryWorkDTO>();
+            foreach (var item in find)
+            {
+                dtos.Add(item.ToLaboratoryWorkDto());
+            }
+            return Ok(dtos);
+        }
+
         // GET: Disciplines/LaboratoryWorks/5
         [Authorize]
         [HttpGet("{id}")]

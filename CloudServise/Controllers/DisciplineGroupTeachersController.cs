@@ -34,10 +34,37 @@ namespace CloudService_API.Controllers
             List<DisciplineGroupTeacherDTO> dtos = new List<DisciplineGroupTeacherDTO>();
             foreach (var item in find)
             {
-                dtos.Add(item.ToDisciplineGroupTeacherDto());
+                dtos.Add(item.ToDisciplineGroupTeacherDTO());
             }
 
             return dtos;
+        }
+
+        //GET: api/DisciplineGroupTeachers/WithPage
+        [Authorize]
+        [HttpGet("WithPage")]
+        public async Task<IActionResult> GetDisciplineGroupTeachersWithPage([FromQuery] DisciplineGroupTeacherParameters disciplineGroupTeacherParameters)
+        {
+            var find = await _context.DisciplineGroupTeacher
+                .Where(s =>
+                EF.Functions.Like(s.Id.ToString(), $"%{disciplineGroupTeacherParameters.Text}%")
+                &&
+                (EF.Functions.Like(s.DisciplineId.ToString(), $"%{disciplineGroupTeacherParameters.DisciplineId}%") &&
+                 EF.Functions.Like(s.GroupId.ToString(), $"%{disciplineGroupTeacherParameters.GroupId}%") &&
+                 EF.Functions.Like(s.TeacherId.ToString(), $"%{disciplineGroupTeacherParameters.TeacherId}%")
+                )
+              ).ToListAsync();
+
+            disciplineGroupTeacherParameters.TotalCount = find.Count;
+            if (!disciplineGroupTeacherParameters.Check())
+                return NoContent();
+            Response.Headers.Add("X-Pagination", disciplineGroupTeacherParameters.PaginationToJson());
+            List<DisciplineGroupTeacherDTO> dtos = new List<DisciplineGroupTeacherDTO>();
+            foreach (var item in find)
+            {
+                dtos.Add(item.ToDisciplineGroupTeacherDTO());
+            }
+            return Ok(dtos);
         }
 
         // GET: api/DisciplineGroupTeachers/5
@@ -52,7 +79,7 @@ namespace CloudService_API.Controllers
                 return NotFound();
             }
 
-            return disciplineGroupTeacher.ToDisciplineGroupTeacherDto();
+            return disciplineGroupTeacher.ToDisciplineGroupTeacherDTO();
         }
 
         // PUT: api/DisciplineGroupTeachers/5
@@ -100,7 +127,7 @@ namespace CloudService_API.Controllers
             {
                 await _context.DisciplineGroupTeacher.AddAsync(disciplineGroupTeacher);
                 await _context.SaveChangesAsync();
-                return Created("", disciplineGroupTeacher.ToDisciplineGroupTeacherDto());
+                return Created("", disciplineGroupTeacher.ToDisciplineGroupTeacherDTO());
             }
             catch (Exception ex)
             {
@@ -123,7 +150,7 @@ namespace CloudService_API.Controllers
             _context.DisciplineGroupTeacher.Remove(disciplineGroupTeacher);
             await _context.SaveChangesAsync();
 
-            return disciplineGroupTeacher.ToDisciplineGroupTeacherDto();
+            return disciplineGroupTeacher.ToDisciplineGroupTeacherDTO();
         }
 
         private bool DisciplineGroupTeacherExists(Guid id)

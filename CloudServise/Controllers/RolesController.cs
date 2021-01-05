@@ -40,6 +40,29 @@ namespace CloudService_API.Controllers
             return roleDtos;
         }
 
+        //GET: api/Roles/WithPage
+        [Authorize(Roles = "root, admin")]
+        [HttpGet("WithPage")]
+        public async Task<IActionResult> GetRolesWithPage([FromQuery] RoleParameters roleParameters)
+        {
+            var find = await _context.Roles
+                .Where(r =>
+                EF.Functions.Like(r.Id.ToString(), $"%{roleParameters.Text}%") ||
+                EF.Functions.Like(r.Name, $"%{roleParameters.Text}%")
+               ).ToListAsync();
+
+            roleParameters.TotalCount = find.Count;
+            if (!roleParameters.Check())
+                return NoContent();
+            Response.Headers.Add("X-Pagination", roleParameters.PaginationToJson());
+            List<RoleDTO> dtos = new List<RoleDTO>();
+            foreach (var item in find)
+            {
+                dtos.Add(item.ToRoleDTO());
+            }
+            return Ok(dtos);
+        }
+
         // GET: api/Roles/5
         [Authorize(Roles = "root, admin")]
         [HttpGet("{id}")]

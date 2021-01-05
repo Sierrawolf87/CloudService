@@ -40,6 +40,32 @@ namespace CloudService_API.Controllers
             return disciplineDtos;
         }
 
+        //GET: api/Disciplines/WithPage
+        [Authorize]
+        [HttpGet("WithPage")]
+        public async Task<IActionResult> GetDisciplinesWithPage([FromQuery] DisciplineParametres disciplineParametres)
+        {
+            var find = await _context.Disciplines
+                .Where(s =>
+               (EF.Functions.Like(s.Id.ToString(), $"%{disciplineParametres.Text}%") ||
+                EF.Functions.Like(s.Name, $"%{disciplineParametres.Text}%")
+               ) &&
+                EF.Functions.Like(s.OwnerId.ToString(), $"%{disciplineParametres.OwnerId}%")
+              ).ToListAsync();
+
+            disciplineParametres.TotalCount = find.Count;
+            if (!disciplineParametres.Check())
+                return NoContent();
+            Response.Headers.Add("X-Pagination", disciplineParametres.PaginationToJson());
+            List<DisciplineDTO> dtos = new List<DisciplineDTO>();
+            foreach (var item in find)
+            {
+                dtos.Add(item.ToDisciplineDto());
+            }
+            return Ok(dtos);
+        }
+
+
         // GET: api/Disciplines/5
         [Authorize]
         [HttpGet("{id}")]

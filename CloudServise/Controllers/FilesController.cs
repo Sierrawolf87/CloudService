@@ -51,6 +51,33 @@ namespace CloudService_API.Controllers
             return dtos;
         }
 
+        //GET: api/Files/WithPage
+        [Authorize(Roles = "root, admin, network_editor")]
+        [HttpGet("WithPage")]
+        public async Task<IActionResult> GetFilesWithPage([FromQuery] FileParametres fileParametres)
+        {
+            var find = await _context.Files.Include(c => c.Solution).Include(c => c.Requirement)
+                .Where(s =>
+               (EF.Functions.Like(s.Id.ToString(), $"%{fileParametres.Text}%") ||
+                EF.Functions.Like(s.Name, $"%{fileParametres.Text}%") 
+               ) &&
+                EF.Functions.Like(s.OwnerId.ToString(), $"%{fileParametres.OwnerId}%") &&
+                EF.Functions.Like(s.Requirement.Id.ToString(), $"%{fileParametres.RequirementId}%") &&
+                EF.Functions.Like(s.Solution.Id.ToString(), $"%{fileParametres.SolutionId}%")
+              ).ToListAsync();
+
+            fileParametres.TotalCount = find.Count;
+            if (!fileParametres.Check())
+                return NoContent();
+            Response.Headers.Add("X-Pagination", fileParametres.PaginationToJson());
+            List<FileDTO> dtos = new List<FileDTO>();
+            foreach (var item in find)
+            {
+                dtos.Add(item.ToFileDto());
+            }
+            return Ok(dtos);
+        }
+
         // GET: api/Files/5
         [Authorize]
         [HttpGet("{id}")]

@@ -34,10 +34,35 @@ namespace CloudService_API.Controllers
             List<RequirementDTO> dtos = new List<RequirementDTO>();
             foreach (var item in find)
             {
-                dtos.Add(item.ToRequirementDto());
+                dtos.Add(item.ToRequirementDTO());
             }
 
             return dtos;
+        }
+
+        //GET: api/Disciplines/LaboratoryWorks/Requirements/WithPage
+        [Authorize(Roles = "root, admin, network_editor, teacher")]
+        [HttpGet("WithPage")]
+        public async Task<IActionResult> GetRequirementsWithPage([FromQuery] RequirementParameters requirementParameters)
+        {
+            var find = await _context.Requirements.Include(c => c.Files)
+                .Where(s =>
+               (EF.Functions.Like(s.Id.ToString(), $"%{requirementParameters.Text}%") ||
+                EF.Functions.Like(s.Description, $"%{requirementParameters.Text}%")
+               ) &&
+                EF.Functions.Like(s.LaboratoryWorkId.ToString(), $"%{requirementParameters.LaboratoryWorkId}%")
+              ).ToListAsync();
+
+            requirementParameters.TotalCount = find.Count;
+            if (!requirementParameters.Check())
+                return NoContent();
+            Response.Headers.Add("X-Pagination", requirementParameters.PaginationToJson());
+            List<RequirementDTO> dtos = new List<RequirementDTO>();
+            foreach (var item in find)
+            {
+                dtos.Add(item.ToRequirementDTO());
+            }
+            return Ok(dtos);
         }
 
         // GET: api/Disciplines/LaboratoryWorks/Requirements/5
@@ -52,7 +77,7 @@ namespace CloudService_API.Controllers
                 return NotFound();
             }
 
-            return requirement.ToRequirementDto();
+            return requirement.ToRequirementDTO();
         }
 
         // PUT: api/Disciplines/LaboratoryWorks/Requirements/5
@@ -100,7 +125,7 @@ namespace CloudService_API.Controllers
             {
                 await _context.Requirements.AddAsync(newRequirement);
                 await _context.SaveChangesAsync();
-                return Ok(newRequirement.ToRequirementDto());
+                return Ok(newRequirement.ToRequirementDTO());
             }
             catch (Exception ex)
             {
@@ -123,7 +148,7 @@ namespace CloudService_API.Controllers
             _context.Requirements.Remove(requirement);
             await _context.SaveChangesAsync();
 
-            return requirement.ToRequirementDto();
+            return requirement.ToRequirementDTO();
         }
 
         private bool RequirementExists(Guid id)

@@ -34,7 +34,7 @@ namespace CloudService_API.Models
             Files = null;
         }
 
-        public RequirementDTO ToRequirementDto()
+        public RequirementDTO ToRequirementDTO()
         {
             return new RequirementDTO(Id, Description, LaboratoryWorkId, Files);
         }

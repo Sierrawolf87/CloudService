@@ -19,7 +19,7 @@ namespace CloudService_API.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly ILogger<SolutionsController> _logger;
-        
+
         public SolutionsController(ApplicationDbContext context, ILogger<SolutionsController> logger)
         {
             _context = context;
@@ -40,6 +40,33 @@ namespace CloudService_API.Controllers
 
             return dtos;
         }
+
+        //GET: api/Disciplines/LaboratoryWorks/Solutions/WithPage
+        [Authorize(Roles = "root, admin, network_editor, teacher")]
+        [HttpGet("WithPage")]
+        public async Task<IActionResult> GetSolutionsWithPage([FromQuery] SolutionParameters solutionParameters)
+        {
+            var find = await _context.Solutions.Include(c => c.Files)
+                .Where(s =>
+               (EF.Functions.Like(s.Id.ToString(), $"%{solutionParameters.Text}%") ||
+                EF.Functions.Like(s.Description, $"%{solutionParameters.Text}%")
+               ) &&
+                EF.Functions.Like(s.LaboratoryWorkId.ToString(), $"%{solutionParameters.LaboratoryWorkId}%") &&
+                EF.Functions.Like(s.OwnerId.ToString(), $"%{solutionParameters.OwnerId}%")
+              ).ToListAsync();
+
+            solutionParameters.TotalCount = find.Count;
+            if (!solutionParameters.Check())
+                return NoContent();
+            Response.Headers.Add("X-Pagination", solutionParameters.PaginationToJson());
+            List<SolutionDTO> dtos = new List<SolutionDTO>();
+            foreach (var item in find)
+            {
+                dtos.Add(item.ToSolutionDto());
+            }
+            return Ok(dtos);
+        }
+
 
         // GET: api/Disciplines/LaboratoryWorks/Solutions/5
         [Authorize(Roles = "root, admin, network_editor, teacher")]
