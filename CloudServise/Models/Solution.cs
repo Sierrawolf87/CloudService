@@ -74,7 +74,7 @@ namespace CloudService_API.Models
             }
             else
             {
-                Files = null;
+                Files = new List<FileDTO>();
             }
         }
     }

@@ -23,5 +23,22 @@ namespace CloudService_API.Data
         public DbSet<LaboratoryWork> LaboratoryWorks { get; set; }
         public DbSet<Requirement> Requirements { get; set; }
         public DbSet<Solution> Solutions { get; set; }
+
+        //protected override void OnModelCreating(ModelBuilder modelBuilder)
+        //{
+        //    modelBuilder.Entity<User>().HasData(new List<User>
+        //    {
+        //        new User
+        //        {
+        //            Id = new Guid("B5933B9F-69D6-41D3-7456-08D89C4C1685"),
+        //            Email = null,
+        //            UserName = "root",
+        //            Name = "root",
+        //            Surname = "root",
+        //            Patronymic = "root",
+        //            Password = "ZWN9JfZx0sM/ajRBk/0+qwnMpjfJuWwXfkLiGglT4YA=", //root
+        //        }
+        //    });
+        //}
     }
 }

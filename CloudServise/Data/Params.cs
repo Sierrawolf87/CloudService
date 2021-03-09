@@ -54,7 +54,7 @@ namespace CloudService_API.Data
             }
         }
 
-        public virtual string PaginationToJson() => JsonConvert.SerializeObject(this);
+        public virtual string PaginationToJson() => JsonConvert.SerializeObject(new { PageCount, TotalCount, Page, Size });
 
         public bool Check()
         {

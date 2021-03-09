@@ -95,9 +95,8 @@ namespace CloudService_API.Models
         public string Patronymic { get; set; }
         public string ReportCard { get; set; }
 
-        public Guid RoleId { get; set; }
-
-        public Guid GroupId { get; set; }
+        public RoleDTO Role { get; set; }
+        public GroupDTO Group { get; set; }
     }
 
     public class ForgotPassword

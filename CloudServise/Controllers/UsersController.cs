@@ -108,9 +108,11 @@ namespace CloudService_API.Controllers
                 return BadRequest();
             }
 
-            var find = await _context.Users.FindAsync(id);
+            var find = await _context.Users.Include(c => c.Role).Include(c => c.Group).FirstOrDefaultAsync(r => r.Id == id);
             _context.Entry(find).State = EntityState.Modified;
 
+            var findRole = await _context.Roles.FindAsync(user.Role.Id);
+            var findGroup = await _context.Groups.FindAsync(user.Group.Id);
             try
             {
                 find.Email = user.Email;
@@ -119,6 +121,8 @@ namespace CloudService_API.Controllers
                 find.Surname = user.Surname;
                 find.Patronymic = user.Patronymic;
                 find.ReportCard = user.ReportCard;
+                find.Role = findRole;
+                find.Group = findGroup;
                 await _context.SaveChangesAsync();
             }
             catch (DbUpdateConcurrencyException ex)
@@ -134,7 +138,7 @@ namespace CloudService_API.Controllers
                 }
             }
 
-            return NoContent();
+            return Ok(find.ToUserDto());
         }
 
         // POST: api/Users/auth/SignUp
@@ -146,13 +150,13 @@ namespace CloudService_API.Controllers
             {
                 return BadRequest("Пользователь с таким учётным номером уже существует");
             }
-            var role = await _context.Roles.FindAsync(user.RoleId);
+            var role = await _context.Roles.FindAsync(user.Role.Id);
             if (role == null)
             {
                 return BadRequest("Invalid role Id");
             }
 
-            var group = await _context.Groups.FindAsync(user.GroupId);
+            var group = await _context.Groups.FindAsync(user.Group.Id);
             if (group == null)
             {
                 return BadRequest("Invalid group Id");
@@ -286,7 +290,7 @@ namespace CloudService_API.Controllers
             find.Password = Auxiliary.GenerateHashPassword(resetPassword.NewPassword, _passwordHashSettings.HashKey);
             await _context.SaveChangesAsync();
             
-            return Ok("Пароль успешно изменён. Можете перейти ко входу");
+            return Ok("Пароль успешно изменён.");
         }
 
         //POST: api/users/auth/ResetPasswordSelf

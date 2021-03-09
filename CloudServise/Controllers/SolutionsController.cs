@@ -87,7 +87,7 @@ namespace CloudService_API.Controllers
         [HttpGet("{id}/GetMySolution")]
         public async Task<ActionResult<SolutionDTO>> GetMySolution(Guid id)
         {
-            var solution = await _context.Solutions.Include(c => c.LaboratoryWork)
+            var solution = await _context.Solutions.Include(c => c.LaboratoryWork).Include(c => c.Files)
                 .Where(c => c.LaboratoryWorkId == id && c.OwnerId == new Guid(User.Identity.Name)).FirstOrDefaultAsync();
 
             if (solution == null)
