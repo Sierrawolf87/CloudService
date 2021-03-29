@@ -146,7 +146,7 @@ namespace CloudService_API.Controllers
         public async Task<FileResult> DownloadSolution(Guid solutionId)
         {
             await using MemoryStream memoryStream = new MemoryStream();
-            using ZipArchive zipArchive = new ZipArchive(memoryStream, ZipArchiveMode.Create, true, System.Text.Encoding.UTF8);
+            using ZipArchive zipArchive = new ZipArchive(memoryStream, ZipArchiveMode.Create, true, System.Text.Encoding.GetEncoding("cp866"));
             try
             {
                 var solution = await _context.Solutions.Include(c => c.Files).Where(s => s.Id == solutionId).FirstOrDefaultAsync();

@@ -92,14 +92,24 @@ namespace CloudService_API.Controllers
 
             if (solution == null)
             {
-                return NotFound();
+                var newSolution = new CreateSolutionDTO
+                {
+                    Id = Guid.NewGuid(),
+                    Description = "",
+                    LaboratoryWorkId = id,
+                    Mark = 0,
+                };
+                await PostSolution(newSolution);
+                await _context.SaveChangesAsync();
+                solution = await _context.Solutions.Include(c => c.LaboratoryWork).Include(c => c.Files)
+                .Where(c => c.LaboratoryWorkId == id && c.OwnerId == new Guid(User.Identity.Name)).FirstOrDefaultAsync();
             }
 
             return Ok(solution.ToSolutionDto());
         }
 
         // PUT: api/Disciplines/LaboratoryWorks/Solutions/5
-        [Authorize(Roles = "root, admin, network_editor, student")]
+        [Authorize(Roles = "root, admin, network_editor, teacher, student")]
         [HttpPut("{id}")]
         public async Task<IActionResult> PutSolution(Guid id, SolutionDTO solution)
         {
@@ -114,6 +124,33 @@ namespace CloudService_API.Controllers
             find.LaboratoryWorkId = solution.LaboratoryWorkId;
             find.Mark = solution.Mark;
             find.OwnerId = solution.OwnerId;
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException ex)
+            {
+                if (!SolutionExists(id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    _logger.LogError(ex.Message);
+                    return StatusCode(500);
+                }
+            }
+
+            return Ok();
+        }
+
+        [Authorize(Roles = "root, admin, network_editor, teacher, student")]
+        [HttpPut("{id}/UdpateMark/{mark}")]
+        public async Task<IActionResult> UdpateMark(Guid id, int mark)
+        {
+            var find = await _context.Solutions.FindAsync(id);
+            _context.Entry(find).State = EntityState.Modified;
+            find.Mark = mark;
             try
             {
                 await _context.SaveChangesAsync();

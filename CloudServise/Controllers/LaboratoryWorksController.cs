@@ -80,6 +80,85 @@ namespace CloudService_API.Controllers
             return laboratoryWork.ToLaboratoryWorkDto();
         }
 
+        [Authorize(Roles = "student")]
+        [HttpGet("GetLaboratoryListByDisciplineStudent/{id}")]
+        public async Task<IActionResult> GetLaboratoryListByDisciplineStudent(Guid id, [FromQuery]string search)
+        {
+            var marks = await _context.Solutions
+                .Where(c => c.OwnerId == new Guid(User.Identity.Name))
+                .Select(c => new
+                {
+                    laboratoryWorkId = c.LaboratoryWorkId,
+                    mark = c.Mark
+                })
+                .ToListAsync();
+            var laboratoryList = await _context.LaboratoryWorks
+                .Include(c => c.Discipline)
+                .Where(c => c.DisciplineId == id &&
+                    EF.Functions.Like(c.Name, $"%{search}%"))
+                .ToListAsync();
+            var requirement = await _context.Requirements.ToListAsync();
+            var result = laboratoryList.Select(c => new
+            {
+                laboratory = c.ToLaboratoryWorkDto(),
+                discipline = c.Discipline.ToDisciplineDto(),
+                requirement = requirement.Where(r => r.LaboratoryWorkId == c.Id).Select(r => r.Description).FirstOrDefault(),
+                mark = marks.Where(m => m.laboratoryWorkId == c.Id).Select(m => m.mark).FirstOrDefault()
+            })
+                .ToList();
+            return Ok(result);
+        }
+
+        [Authorize(Roles = "teacher")]
+        [HttpGet("GetLaboratoryListByDisciplineTeacher/{id}")]
+        public async Task<IActionResult> GetLaboratoryListByDisciplineTeacher(Guid id, [FromQuery] string search)
+        {
+            var marks = await _context.Solutions
+                .Select(c => new
+                {
+                    laboratoryWorkId = c.LaboratoryWorkId,
+                    mark = c.Mark
+                })
+                .ToListAsync();
+            var laboratoryList = await _context.LaboratoryWorks
+                .Include(c => c.Discipline)
+                .Where(c => c.DisciplineId == id &&
+                    EF.Functions.Like(c.Name, $"%{search}%"))
+                .OrderBy(c => c.Name)
+                .ToListAsync();
+            var requirement = await _context.Requirements.ToListAsync();
+            var solutions = await _context.Solutions.ToListAsync();
+            var result = laboratoryList.Select(c => new
+            {
+                laboratory = c.ToLaboratoryWorkDto(),
+                discipline = c.Discipline.ToDisciplineDto(),
+                requirement = requirement.Where(r => r.LaboratoryWorkId == c.Id).Select(r => r.Description).FirstOrDefault(),
+                solutionsCount = solutions.Count(s => s.LaboratoryWorkId == c.Id)
+                //,markAvg = Math.Round(marks.Where(m => m.laboratoryWorkId == c.Id).Select(m => m.mark).Average(), 1),
+            })
+                .ToList();
+            return Ok(result);
+        }
+
+        [Authorize(Roles = "teacher")]
+        [HttpGet("GetStudentLaboratoryListForTeatcher/{id}")]
+        public async Task<IActionResult> GetStudentLaboratoryListForTeatcher(Guid id, [FromQuery] string search)
+        {
+            var users = await _context.Users.ToListAsync();
+            var solutionsList = await _context.Solutions
+                .Where(c => c.LaboratoryWorkId.Equals(id))
+                .ToListAsync();
+            var result = solutionsList.Select(c => new
+            {
+                initials = users.FirstOrDefault(f => f.Id.Equals(c.OwnerId)).ToUserDto().Initials,
+                solutionId = c.Id,
+                laboratoryWorkId = c.LaboratoryWorkId,
+                mark = c.Mark
+            })
+                .ToList();
+            return Ok(result);
+        }
+
         // PUT: Disciplines/LaboratoryWorks/5
         [Authorize(Roles = "root, admin, network_editor, teacher")]
         [HttpPut("{id}")]
@@ -121,8 +200,7 @@ namespace CloudService_API.Controllers
         [HttpPost]
         public async Task<ActionResult<LaboratoryWorkDTO>> PostLaboratoryWork(CreateLaboratoryWorkDTO laboratoryWorkDto)
         {
-            LaboratoryWork newLaboratoryWork = new LaboratoryWork(laboratoryWorkDto.Name, new Guid(User.Identity.Name), laboratoryWorkDto.DisciplineId);
-
+            LaboratoryWork newLaboratoryWork = new LaboratoryWork(Guid.NewGuid(), laboratoryWorkDto.Name, new Guid(User.Identity.Name), laboratoryWorkDto.DisciplineId);
             try
             {
                 await _context.AddAsync(newLaboratoryWork);

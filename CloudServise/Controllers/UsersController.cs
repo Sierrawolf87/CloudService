@@ -21,7 +21,6 @@ namespace CloudService_API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [EnableCors("AllowAll")]
     public class UsersController : ControllerBase
     {
         private readonly ApplicationDbContext _context;

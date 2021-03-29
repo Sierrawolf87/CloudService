@@ -25,8 +25,9 @@ namespace CloudService_API.Models
         public List<LaboratoryWork> Laboratories { get; set; }
 
         public Discipline() {}
-        public Discipline(string name, Guid ownerId, string shortName)
+        public Discipline(Guid id, string name, Guid ownerId, string shortName)
         {
+            Id = id;
             Name = name;
             OwnerId = ownerId;
             ShortName = shortName;
@@ -58,8 +59,8 @@ namespace CloudService_API.Models
 
     public class CreateDisciplineDTO
     {
-        public Guid Id { get; set; }
         public string Name { get; set; }
         public string ShortName { get; set; }
+        public Guid GroupId { get; set; }
     }
 }

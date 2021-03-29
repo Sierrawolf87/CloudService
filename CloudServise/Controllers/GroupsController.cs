@@ -26,7 +26,7 @@ namespace CloudService_API.Controllers
         }
 
         // GET: api/Groups
-        [Authorize(Roles = "root, admin, network_editor")]
+        [Authorize(Roles = "root, admin, network_editor, teacher")]
         [HttpGet]
         public async Task<ActionResult<IEnumerable<GroupDTO>>> GetGroups()
         {
@@ -41,7 +41,7 @@ namespace CloudService_API.Controllers
         }
 
         //GET: api/Groups/WithPage
-        [Authorize(Roles = "root, admin, network_editor")]
+        [Authorize(Roles = "root, admin, network_editor, teacher")]
         [HttpGet("WithPage")]
         public async Task<IActionResult> GetGroupsWithPage([FromQuery] GroupParameters groupParameters)
         {
@@ -64,7 +64,7 @@ namespace CloudService_API.Controllers
         }
 
         // GET: api/Groups/5
-        [Authorize(Roles = "root, admin, network_editor")]
+        [Authorize(Roles = "root, admin, network_editor, teacher")]
         [HttpGet("{id}")]
         public async Task<ActionResult<GroupDTO>> GetGroup(Guid id)
         {

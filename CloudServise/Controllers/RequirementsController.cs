@@ -80,6 +80,35 @@ namespace CloudService_API.Controllers
             return requirement.ToRequirementDTO();
         }
 
+        // GET: api/Disciplines/LaboratoryWorks/Requirements/GetByLaboratory/5
+        [Authorize]
+        [HttpGet("GetByLaboratory/{id}")]
+        public async Task<ActionResult<RequirementDTO>> GetByLaboratory(Guid id)
+        {
+            var requirement = await _context.Requirements
+                .Include(c => c.Files)
+                .Where(c => c.LaboratoryWorkId == id)
+                .FirstOrDefaultAsync();
+
+            if (requirement == null)
+            {
+                var newRequirement = new CreateRequirementDTO
+                {
+                    Id = Guid.NewGuid(),
+                    Description = "",
+                    LaboratoryWorkId = id
+                };
+                await PostRequirement(newRequirement);
+                await _context.SaveChangesAsync();
+                requirement = await _context.Requirements
+                .Include(c => c.Files)
+                .Where(c => c.LaboratoryWorkId == id)
+                .FirstOrDefaultAsync();
+            }
+
+            return requirement.ToRequirementDTO();
+        }
+
         // PUT: api/Disciplines/LaboratoryWorks/Requirements/5
         [Authorize(Roles = "root, admin, network_editor, teacher")]
         [HttpPut("{id}")]

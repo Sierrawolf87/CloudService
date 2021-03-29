@@ -81,6 +81,59 @@ namespace CloudService_API.Controllers
             return discipline.ToDisciplineDto();
         }
 
+        [Authorize]
+        [HttpGet("GetStudentDiscipline")]
+        public async Task<IActionResult> GetStudentDiscipline([FromQuery] string search)
+        {
+            var groupId = await _context.Users
+                .Include(c => c.Group)
+                .Where(c => c.Id.Equals(new Guid(User.Identity.Name)))
+                .Select(c => c.Group.Id)
+                .FirstOrDefaultAsync();
+            var discipline = await _context.DisciplineGroupTeacher
+                .Include(c => c.Discipline)
+                .Include(c => c.Group)
+                .Where(c => c.Group.Id.Equals(groupId) &&
+                        (EF.Functions.Like(c.Discipline.Name, $"%{search}%") ||
+                        EF.Functions.Like(c.Discipline.ShortName, $"%{search}%")))
+                .Select(c => c.Discipline.ToDisciplineDto())
+                .ToListAsync();
+
+            if (discipline == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(discipline);
+        }
+
+        [Authorize]
+        [HttpGet("GetTeacherDiscipline")]
+        public async Task<IActionResult> GetTeacherDiscipline([FromQuery] string search)
+        {
+            var discipline = await _context.DisciplineGroupTeacher
+                .Include(c => c.Discipline)
+                .Include(c => c.Group)
+                .Include(c => c.Teacher)
+                .Where(c => c.Teacher.Id.Equals(new Guid(User.Identity.Name)) &&
+                        EF.Functions.Like(c.Discipline.Name, $"%{search}%") ||
+                        EF.Functions.Like(c.Discipline.ShortName, $"%{search}%") ||
+                        EF.Functions.Like(c.Group.Name, $"%{search}%"))
+                .Select(c => new 
+                {
+                    discipline = c.Discipline.ToDisciplineDto(),
+                    group = c.Group.ToGroupDto()
+                })
+                .ToListAsync();
+
+            if (discipline == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(discipline);
+        }
+
         // PUT: api/Disciplines/5
         [Authorize(Roles = "root, admin, network_editor, teacher")]
         [HttpPut("{id}")]
@@ -121,10 +174,13 @@ namespace CloudService_API.Controllers
         [HttpPost]
         public async Task<ActionResult<DisciplineDTO>> PostDiscipline(CreateDisciplineDTO disciplineDto)
         {
-            Discipline discipline = new Discipline(disciplineDto.Name, new Guid(User.Identity.Name), disciplineDto.ShortName);
+            Discipline discipline = new Discipline(Guid.NewGuid(), disciplineDto.Name, new Guid(User.Identity.Name), disciplineDto.ShortName);
+            DisciplineGroupTeacher disciplineGroupTeacher =
+                new DisciplineGroupTeacher(discipline.Id, disciplineDto.GroupId, new Guid(User.Identity.Name));
             try
             {
                 await _context.Disciplines.AddAsync(discipline);
+                await _context.DisciplineGroupTeacher.AddAsync(disciplineGroupTeacher);
                 await _context.SaveChangesAsync();
                 return Created("", discipline.ToDisciplineDto());
             }
